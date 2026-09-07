@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Potti Megnana Golivi - Exact GPS Tracker</title>
+    <title>Potti Megnana Golivi </title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -168,7 +168,7 @@
             </div>
         </div>
         
-        <h1>🐭 Megnana Golivi (Potti or Chitti)</h1>
+        <h1>🐭 Megnana Golivi (Potti/Chitti)</h1>
         <p class="subtitle">Already i catch you <strong>Papam Trinadh ikkada</strong></p>
         <span class="gps-badge">📡 Potti pilla</span>
         
@@ -187,7 +187,7 @@
         <div class="excel-count" id="locationCount">📊 dhorikipoyav papam</div>
         
         <footer>
-            <p>🐭 Exact GPS location saved to Excel</p>
+            <p>🐭 Micky for you potti</p>
             <p style="font-size: 11px; margin-top: 5px;">📍 Accuracy depends on device GPS signal</p>
         </footer>
     </div>
@@ -201,7 +201,7 @@
                 .then(result => {
                     if (result.success) {
                         document.getElementById('locationCount').textContent = 
-                            `📊 Intellegent vi nuv: ${result.count} `;
+                            `📊 Intellegent vi nuv`;
                     }
                 })
                 .catch(() => {});
@@ -373,7 +373,7 @@
         }
         
         window.addEventListener('load', () => {
-            console.log('🐭 Potti Megnana Golivi - Exact GPS Tracker loaded');
+            console.log('🐭 Potti Megnana Golivi ');
             updateLocationCount();
             
             setTimeout(() => {
