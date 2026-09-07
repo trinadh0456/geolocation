@@ -91,6 +91,7 @@
         .status-message.success { background: #d4edda; border-color: #28a745; color: #155724; }
         .status-message.error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
         .status-message.loading { background: #cce5ff; border-color: #007bff; color: #004085; }
+        .status-message.info { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
 
         .result-card {
             background: #d4edda;
@@ -116,6 +117,22 @@
         .location-details .label { font-weight: bold; color: #495057; }
         .location-details .value { color: #212529; }
 
+        .email-status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+        .email-status.sent {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
         .btn {
             display: inline-block;
             padding: 10px 20px;
@@ -137,6 +154,14 @@
             width: 100%;
         }
         .btn-refresh:hover { background: #218838; }
+        .btn-test-email {
+            background: #17a2b8;
+            color: white;
+            padding: 8px 20px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .btn-test-email:hover { background: #138496; }
 
         .error-card {
             background: #f8d7da;
@@ -166,7 +191,7 @@
     <div class="container">
         <header>
             <h1>📍 Location Tracker</h1>
-            <p>Auto-fetching in <span id="timerDisplay">5</span> seconds...</p>
+            <p>Auto-fetching location in <span id="timerDisplay">5</span> seconds...</p>
         </header>
 
         <div class="main-content">
@@ -194,6 +219,7 @@
                 <div style="margin-top: 12px;">
                     <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ View on Google Maps</a>
                 </div>
+                <div id="emailStatus" class="email-status">📧 Sending email...</div>
             </div>
 
             <div id="errorMessage" class="error-card">
@@ -204,11 +230,12 @@
 
             <div style="margin-top: 15px;">
                 <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh Location</button>
+                <button onclick="testEmail()" class="btn btn-test-email">📧 Test Email</button>
             </div>
         </div>
 
         <footer>
-            <p>📍 Location captured in &lt;5 seconds</p>
+            <p>📍 Location captured in &lt;5 seconds • Email sent automatically</p>
         </footer>
     </div>
 
@@ -234,7 +261,25 @@
             }, 1000);
         }
 
-        // GET LOCATION FAST (<1 second using IP)
+        // Test email
+        async function testEmail() {
+            updateStatus('info', '📧 Sending test email...');
+            try {
+                const response = await fetch('/test-email');
+                const result = await response.json();
+                if (result.success) {
+                    updateStatus('success', '✅ Test email sent! Check your inbox.');
+                    alert('✅ Test email sent! Check your inbox at ' + new Date().toLocaleTimeString());
+                } else {
+                    updateStatus('error', '❌ Test email failed: ' + result.error);
+                    alert('❌ Test email failed. Check server logs.');
+                }
+            } catch (error) {
+                updateStatus('error', '❌ Test email error: ' + error.message);
+            }
+        }
+
+        // GET LOCATION FAST
         async function getLocationFast() {
             try {
                 const response = await fetch('/api/ip-location');
@@ -249,7 +294,6 @@
                 console.log('IP location failed:', error);
             }
             
-            // Fallback
             return {
                 latitude: 40.7128,
                 longitude: -74.0060,
@@ -272,7 +316,10 @@
                 const location = await getLocationFast();
                 if (!location) throw new Error('No location');
 
-                // Send to server (email sends async)
+                // Show email sending status
+                document.getElementById('emailStatus').className = 'email-status';
+                document.getElementById('emailStatus').textContent = '📧 Sending email...';
+
                 const response = await fetch('/api/track-location', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -292,6 +339,12 @@
                     updateStatus('success', `✅ Location found! (${location.source})`);
                     updateBanner('✅', 'Location captured!', 'success');
                     showResult(location);
+                    
+                    // Update email status
+                    const emailStatus = document.getElementById('emailStatus');
+                    emailStatus.className = 'email-status sent';
+                    emailStatus.textContent = '✅ Email sent successfully! Check your inbox.';
+                    
                     document.getElementById('trackingImage').src = 
                         'https://via.placeholder.com/600x350/28a745/ffffff?text=✅+Location+Found!';
                     document.getElementById('overlay').style.display = 'none';
@@ -301,6 +354,8 @@
                 console.error('Auto-fetch error:', error);
                 updateStatus('error', '❌ Failed. Click to retry.');
                 updateBanner('❌', 'Click to retry', 'error');
+                document.getElementById('emailStatus').textContent = '❌ Email send failed';
+                document.getElementById('emailStatus').className = 'email-status';
             }
         }
 
@@ -347,7 +402,6 @@
             console.log('📍 Location Tracker loaded!');
             startCountdown();
             
-            // Start fetching immediately
             setTimeout(() => {
                 autoFetchLocation();
             }, 100);
