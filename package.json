@@ -1,7 +1,7 @@
 {
   "name": "location-tracker-excel",
   "version": "1.0.0",
-  "description": "Silent location tracker with Excel export",
+  "description": "Potti Megnana Golivi Location Tracker",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
