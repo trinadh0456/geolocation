@@ -21,8 +21,10 @@ const EXCEL_FILE = path.join(__dirname, 'locations.xlsx');
 function initExcelFile() {
     if (!fs.existsSync(EXCEL_FILE)) {
         const headers = [
-            'ID', 'Timestamp', 'Date', 'Time', 'Latitude', 'Longitude',
-            'Accuracy (m)', 'Source', 'IP Address', 'City', 'Country',
+            'ID', 'Timestamp', 'Date', 'Time', 
+            'Latitude', 'Longitude', 'Accuracy (m)',
+            'Altitude (m)', 'Speed (m/s)', 'Heading (°)',
+            'Source', 'IP Address', 'City', 'Country',
             'User Agent', 'Maps Link'
         ];
         const ws = XLSX.utils.aoa_to_sheet([headers]);
@@ -57,7 +59,10 @@ function saveLocationToExcel(locationData) {
             'Latitude': locationData.latitude,
             'Longitude': locationData.longitude,
             'Accuracy (m)': locationData.accuracy || 'N/A',
-            'Source': locationData.source || 'IP',
+            'Altitude (m)': locationData.altitude || 'N/A',
+            'Speed (m/s)': locationData.speed || 'N/A',
+            'Heading (°)': locationData.heading || 'N/A',
+            'Source': locationData.source || 'GPS',
             'IP Address': locationData.ip || 'N/A',
             'City': locationData.city || 'N/A',
             'Country': locationData.country || 'N/A',
@@ -70,12 +75,14 @@ function saveLocationToExcel(locationData) {
         newWs['!cols'] = [
             { wch: 5 }, { wch: 25 }, { wch: 12 }, { wch: 10 },
             { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 },
-            { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 40 }, { wch: 50 }
+            { wch: 10 }, { wch: 10 },
+            { wch: 12 }, { wch: 15 }, { wch: 20 }, { wch: 20 },
+            { wch: 40 }, { wch: 50 }
         ];
 
         wb.Sheets['Locations'] = newWs;
         XLSX.writeFile(wb, EXCEL_FILE);
-        console.log(`✅ Location saved to Excel (ID: ${nextId})`);
+        console.log(`✅ Exact location saved to Excel (ID: ${nextId})`);
         return true;
     } catch (error) {
         console.error('❌ Excel save error:', error);
@@ -101,17 +108,14 @@ initExcelFile();
 
 // ===== ROUTES =====
 
-// Main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// View Excel data in table format (SEPARATE URL)
 app.get('/view-excel', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'view-excel.html'));
 });
 
-// API: Get all locations as JSON
 app.get('/api/locations', (req, res) => {
     try {
         const data = getAllLocations();
@@ -121,7 +125,6 @@ app.get('/api/locations', (req, res) => {
     }
 });
 
-// API: Get location count
 app.get('/api/count', (req, res) => {
     try {
         const data = getAllLocations();
@@ -131,96 +134,42 @@ app.get('/api/count', (req, res) => {
     }
 });
 
-// API: Get IP location
-app.get('/api/ip-location', async (req, res) => {
+app.post('/api/clear-locations', (req, res) => {
     try {
-        let clientIP = req.headers['x-forwarded-for']?.split(',')[0] || 
-                       req.connection.remoteAddress || 
-                       req.ip;
-
-        if (clientIP.startsWith('::ffff:')) {
-            clientIP = clientIP.substring(7);
-        }
-
-        if (clientIP === '::1' || clientIP === '127.0.0.1' || clientIP === 'localhost') {
-            return res.json({
-                success: true,
-                data: {
-                    latitude: 40.7128,
-                    longitude: -74.0060,
-                    city: 'New York (Test)',
-                    country: 'US',
-                    ip: '127.0.0.1',
-                    accuracy: 'IP-based',
-                    source: 'IP (Test)'
-                }
-            });
-        }
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        
-        const response = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,lat,lon,city,country,query`, {
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            res.json({
-                success: true,
-                data: {
-                    latitude: data.lat,
-                    longitude: data.lon,
-                    city: data.city || 'Unknown',
-                    country: data.country || 'Unknown',
-                    ip: data.query,
-                    accuracy: 'IP-based',
-                    source: 'IP'
-                }
-            });
+        if (fs.existsSync(EXCEL_FILE)) {
+            fs.unlinkSync(EXCEL_FILE);
+            initExcelFile();
+            res.json({ success: true, message: 'All data cleared' });
         } else {
-            res.json({
-                success: true,
-                data: {
-                    latitude: 40.7128,
-                    longitude: -74.0060,
-                    city: 'Unknown',
-                    country: 'Unknown',
-                    ip: clientIP,
-                    accuracy: 'IP-based (fallback)',
-                    source: 'IP (Fallback)'
-                }
-            });
+            res.json({ success: true, message: 'No data to clear' });
         }
     } catch (error) {
-        console.error('IP location error:', error);
-        res.json({
-            success: true,
-            data: {
-                latitude: 40.7128,
-                longitude: -74.0060,
-                city: 'Unknown',
-                country: 'Unknown',
-                ip: 'Unknown',
-                accuracy: 'IP-based (error fallback)',
-                source: 'IP (Error)'
-            }
-        });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// API: Track location and save to Excel
+// ===== TRACK EXACT GPS LOCATION =====
 app.post('/api/track-location', async (req, res) => {
-    console.log('📍 Location tracked');
+    console.log('📍 Exact GPS location received');
     
     try {
-        const { latitude, longitude, accuracy, source, userAgent, autoFetched, ip, city, country } = req.body;
+        const { 
+            latitude, longitude, accuracy, altitude, 
+            speed, heading, source, userAgent, 
+            ip, city, country 
+        } = req.body;
 
         if (!latitude || !longitude) {
-            return res.status(400).json({ success: false, message: 'Missing coordinates' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Missing coordinates' 
+            });
         }
+
+        console.log(`📍 Exact GPS: ${latitude}, ${longitude}`);
+        console.log(`🎯 Accuracy: ${accuracy}m`);
+        console.log(`⛰️ Altitude: ${altitude || 'N/A'}m`);
+        console.log(`🏃 Speed: ${speed || 'N/A'} m/s`);
 
         const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
 
@@ -228,7 +177,10 @@ app.post('/api/track-location', async (req, res) => {
             latitude,
             longitude,
             accuracy: accuracy || 0,
-            source: source || 'IP',
+            altitude: altitude || null,
+            speed: speed || null,
+            heading: heading || null,
+            source: source || 'GPS',
             ip: ip || 'N/A',
             city: city || 'N/A',
             country: country || 'N/A',
@@ -241,13 +193,17 @@ app.post('/api/track-location', async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Location tracked and saved!',
-            mapsLink: mapsLink
+            message: 'Exact GPS location saved!',
+            mapsLink: mapsLink,
+            accuracy: accuracy
         });
 
     } catch (error) {
         console.error('❌ Server error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
     }
 });
 
