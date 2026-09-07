@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: location-tracker
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_TO
+        sync: false
+      - key: NODE_ENV
+        value: production
