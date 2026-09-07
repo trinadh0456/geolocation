@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Location Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h2>📍 Auto Location Tracker developed By Trinadh</h2>
+            <p>Location is fetched automatically when you visit this page</p>
+            <div class="gps-status" id="gpsStatus">
+                <span class="status-dot" id="gpsDot"></span>
+                <span id="gpsText">Initializing GPS...</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Auto-fetch banner -->
+            <div class="auto-fetch-banner" id="autoFetchBanner">
+                <span class="auto-icon">🔄</span>
+                <span id="bannerText">Auto-fetching location...</span>
+            </div>
+
+            <div class="image-wrapper">
+                <div class="image-container" onclick="handleImageClick()">
+                    <img 
+                        id="trackingImage"
+                        src="https://via.placeholder.com/600x350/667eea/ffffff?text=Click+for+Location"
+                        alt="Location tracker"
+                        class="tracking-image"
+                    />
+                    <div class="overlay" id="overlay">
+                        <span class="click-text">👆 Click Here</span>
+                    </div>
+                    <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Getting your device location...</p>
+                        <p class="sub-text">Using GPS/WiFi</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="status" class="status-message">
+                🔄 Auto-fetching location...
+            </div>
+
+            <!-- Latest Location Display -->
+            <div id="latestLocation" class="latest-location-container"></div>
+
+            <div id="result" style="display: none;" class="result-card">
+                <h2>✅ Location Captured!</h2>
+                <div id="locationDetails" class="location-details"></div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ Google Maps</a>
+                    <a id="resultWazeLink" href="#" target="_blank" class="btn btn-waze">🧭 Waze</a>
+                </div>
+            </div>
+
+            <div id="errorMessage" style="display: none;" class="error-card">
+                <h2>❌ Oops!</h2>
+                <p id="errorText">Something went wrong. Please try again.</p>
+                <button onclick="handleImageClick()" class="btn btn-retry">🔄 Try Again</button>
+            </div>
+
+            <!-- Manual refresh button -->
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh Location</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>📍 Location is auto-fetched on page load</p>
+            <p style="font-size: 11px; margin-top: 5px;">📡 Accuracy depends on device GPS/WiFi signal</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
