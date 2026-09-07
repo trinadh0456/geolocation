@@ -1,4 +1,5 @@
-/* public/style.css */
+/* public/style.css - Updated with Regular Fonts */
+
 * {
     margin: 0;
     padding: 0;
@@ -6,7 +7,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    font-style: normal; /* Force regular text */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
@@ -35,11 +37,16 @@ header {
 header h1 {
     font-size: 2rem;
     margin-bottom: 8px;
+    font-style: normal; /* Remove italic */
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 header p {
     opacity: 0.9;
     font-size: 1.1rem;
+    font-style: normal; /* Remove italic */
+    font-weight: 400;
 }
 
 .gps-status {
@@ -96,6 +103,7 @@ header p {
     margin-bottom: 20px;
     text-align: center;
     font-weight: 500;
+    font-style: normal;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -170,7 +178,8 @@ header p {
 .click-text {
     color: white;
     font-size: 2.2rem;
-    font-weight: bold;
+    font-weight: 600;
+    font-style: normal; /* Remove italic */
     text-shadow: 0 2px 15px rgba(0,0,0,0.6);
     animation: pulse 2s ease-in-out infinite;
 }
@@ -199,6 +208,7 @@ header p {
     font-size: 0.8rem;
     opacity: 0.7;
     margin-top: 5px;
+    font-style: normal;
 }
 
 .spinner {
@@ -218,6 +228,7 @@ header p {
 .loading-spinner p {
     margin-top: 15px;
     font-size: 1.1rem;
+    font-style: normal;
 }
 
 /* Status Message */
@@ -230,6 +241,8 @@ header p {
     border-left: 4px solid #6c757d;
     transition: all 0.3s ease;
     text-align: center;
+    font-style: normal;
+    font-weight: 400;
 }
 
 .status-message.success {
@@ -273,6 +286,8 @@ header p {
     color: #004085;
     margin-bottom: 15px;
     font-size: 1.1rem;
+    font-style: normal;
+    font-weight: 600;
 }
 
 .latest-info {
@@ -286,6 +301,7 @@ header p {
     border-bottom: 1px solid #f0f0f0;
     display: flex;
     justify-content: space-between;
+    font-style: normal;
 }
 
 .latest-info div:last-child {
@@ -293,12 +309,15 @@ header p {
 }
 
 .latest-info .label {
-    font-weight: bold;
+    font-weight: 600;
     color: #495057;
+    font-style: normal;
 }
 
 .latest-info .value {
     color: #212529;
+    font-style: normal;
+    font-weight: 400;
 }
 
 /* Result Card */
@@ -326,6 +345,8 @@ header p {
     color: #155724;
     text-align: center;
     margin-bottom: 15px;
+    font-style: normal;
+    font-weight: 700;
 }
 
 .location-details {
@@ -339,6 +360,7 @@ header p {
     border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
+    font-style: normal;
 }
 
 .location-details div:last-child {
@@ -346,12 +368,15 @@ header p {
 }
 
 .location-details .label {
-    font-weight: bold;
+    font-weight: 600;
     color: #495057;
+    font-style: normal;
 }
 
 .location-details .value {
     color: #212529;
+    font-style: normal;
+    font-weight: 400;
 }
 
 .location-details .value a {
@@ -376,11 +401,14 @@ header p {
 .error-card h2 {
     color: #721c24;
     margin-bottom: 10px;
+    font-style: normal;
+    font-weight: 700;
 }
 
 .error-card p {
     color: #721c24;
     margin-bottom: 15px;
+    font-style: normal;
 }
 
 /* Buttons */
@@ -396,6 +424,8 @@ header p {
     font-weight: 600;
     text-align: center;
     flex: 1;
+    font-style: normal;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
 }
 
 .btn-map {
@@ -439,6 +469,9 @@ header p {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    font-style: normal;
+    font-weight: 600;
 }
 
 .btn-refresh:hover {
@@ -456,6 +489,8 @@ header p {
     text-decoration: none;
     font-size: 0.9rem;
     margin-top: 5px;
+    font-style: normal;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
 }
 
 .btn-map-small:hover {
@@ -470,6 +505,8 @@ footer {
     color: #6c757d;
     border-top: 1px solid #dee2e6;
     font-size: 0.9rem;
+    font-style: normal;
+    font-weight: 400;
 }
 
 /* Responsive */
