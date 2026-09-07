@@ -1,7 +1,7 @@
 {
-  "name": "geolocation-tracker",
+  "name": "location-tracker",
   "version": "1.0.0",
-  "description": "IP-based location tracker with email",
+  "description": "Auto location tracker with email",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
