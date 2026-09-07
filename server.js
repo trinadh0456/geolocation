@@ -14,29 +14,56 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static('public'));
 
-const EXCEL_FILE = path.join(__dirname, 'locations.xlsx');
+// ===== IMPORTANT: Use persistent storage path =====
+// For Render, use /data directory if mounted, otherwise use current directory
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const EXCEL_FILE = path.join(DATA_DIR, 'locations.xlsx');
+
+console.log(`📊 Excel file path: ${EXCEL_FILE}`);
 
 // ===== EXCEL FUNCTIONS =====
 
 function initExcelFile() {
-    if (!fs.existsSync(EXCEL_FILE)) {
-        const headers = [
-            'ID', 'Timestamp', 'Date', 'Time', 
-            'Latitude', 'Longitude', 'Accuracy (m)',
-            'Altitude (m)', 'Speed (m/s)', 'Heading (°)',
-            'Source', 'IP Address', 'City', 'Country',
-            'User Agent', 'Maps Link'
-        ];
-        const ws = XLSX.utils.aoa_to_sheet([headers]);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Locations');
-        XLSX.writeFile(wb, EXCEL_FILE);
-        console.log('✅ Excel file created');
+    try {
+        // Ensure directory exists
+        const dir = path.dirname(EXCEL_FILE);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+            console.log(`📁 Created directory: ${dir}`);
+        }
+
+        if (!fs.existsSync(EXCEL_FILE)) {
+            const headers = [
+                'ID', 'Timestamp', 'Date', 'Time', 
+                'Latitude', 'Longitude', 'Accuracy (m)',
+                'Altitude (m)', 'Speed (m/s)', 'Heading (°)',
+                'Source', 'IP Address', 'City', 'Country',
+                'User Agent', 'Maps Link'
+            ];
+            const ws = XLSX.utils.aoa_to_sheet([headers]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Locations');
+            XLSX.writeFile(wb, EXCEL_FILE);
+            console.log('✅ Excel file created at:', EXCEL_FILE);
+            return true;
+        }
+        return true;
+    } catch (error) {
+        console.error('❌ Failed to create Excel file:', error);
+        return false;
     }
 }
 
 function saveLocationToExcel(locationData) {
     try {
+        // Ensure Excel file exists
+        if (!fs.existsSync(EXCEL_FILE)) {
+            const created = initExcelFile();
+            if (!created) {
+                throw new Error('Could not create Excel file');
+            }
+        }
+
         let wb, ws;
         if (fs.existsSync(EXCEL_FILE)) {
             wb = XLSX.readFile(EXCEL_FILE);
@@ -47,6 +74,19 @@ function saveLocationToExcel(locationData) {
             ws = wb.Sheets['Locations'];
         }
 
+        if (!ws) {
+            // If sheet doesn't exist, create new
+            const headers = [
+                'ID', 'Timestamp', 'Date', 'Time', 
+                'Latitude', 'Longitude', 'Accuracy (m)',
+                'Altitude (m)', 'Speed (m/s)', 'Heading (°)',
+                'Source', 'IP Address', 'City', 'Country',
+                'User Agent', 'Maps Link'
+            ];
+            ws = XLSX.utils.aoa_to_sheet([headers]);
+        }
+
+        // Get existing data count
         const existingData = XLSX.utils.sheet_to_json(ws);
         const nextId = existingData.length + 1;
         const timestamp = new Date(locationData.timestamp || Date.now());
@@ -72,6 +112,8 @@ function saveLocationToExcel(locationData) {
 
         const newData = [...existingData, newRow];
         const newWs = XLSX.utils.json_to_sheet(newData);
+        
+        // Set column widths
         newWs['!cols'] = [
             { wch: 5 }, { wch: 25 }, { wch: 12 }, { wch: 10 },
             { wch: 15 }, { wch: 15 }, { wch: 12 }, { wch: 12 },
@@ -82,7 +124,7 @@ function saveLocationToExcel(locationData) {
 
         wb.Sheets['Locations'] = newWs;
         XLSX.writeFile(wb, EXCEL_FILE);
-        console.log(`✅ Exact location saved to Excel (ID: ${nextId})`);
+        console.log(`✅ Location saved to Excel (ID: ${nextId}) at ${EXCEL_FILE}`);
         return true;
     } catch (error) {
         console.error('❌ Excel save error:', error);
@@ -95,7 +137,9 @@ function getAllLocations() {
         if (fs.existsSync(EXCEL_FILE)) {
             const wb = XLSX.readFile(EXCEL_FILE);
             const ws = wb.Sheets['Locations'];
-            return XLSX.utils.sheet_to_json(ws);
+            if (ws) {
+                return XLSX.utils.sheet_to_json(ws);
+            }
         }
         return [];
     } catch (error) {
@@ -104,7 +148,9 @@ function getAllLocations() {
     }
 }
 
-initExcelFile();
+// Initialize Excel file on startup
+const initSuccess = initExcelFile();
+console.log(`📊 Excel initialization: ${initSuccess ? 'SUCCESS' : 'FAILED'}`);
 
 // ===== ROUTES =====
 
@@ -166,10 +212,8 @@ app.post('/api/track-location', async (req, res) => {
             });
         }
 
-        console.log(`📍 Exact GPS: ${latitude}, ${longitude}`);
+        console.log(`📍 GPS: ${latitude}, ${longitude}`);
         console.log(`🎯 Accuracy: ${accuracy}m`);
-        console.log(`⛰️ Altitude: ${altitude || 'N/A'}m`);
-        console.log(`🏃 Speed: ${speed || 'N/A'} m/s`);
 
         const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
 
@@ -189,14 +233,20 @@ app.post('/api/track-location', async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
-        saveLocationToExcel(locationData);
+        // Save to Excel
+        const saved = saveLocationToExcel(locationData);
 
-        res.json({
-            success: true,
-            message: 'Exact GPS location saved!',
-            mapsLink: mapsLink,
-            accuracy: accuracy
-        });
+        if (saved) {
+            res.json({
+                success: true,
+                message: 'Exact GPS location saved!',
+                mapsLink: mapsLink,
+                accuracy: accuracy,
+                filePath: EXCEL_FILE
+            });
+        } else {
+            throw new Error('Failed to save to Excel');
+        }
 
     } catch (error) {
         console.error('❌ Server error:', error);
