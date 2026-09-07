@@ -132,6 +132,11 @@
             border-color: #28a745;
             color: #155724;
         }
+        .email-status.error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
 
         .btn {
             display: inline-block;
@@ -219,7 +224,7 @@
                 <div style="margin-top: 12px;">
                     <a id="resultMapLink" href="#" target="_blank" class="btn btn-map">🗺️ View on Google Maps</a>
                 </div>
-                <div id="emailStatus" class="email-status">📧 Sending email...</div>
+                <div id="emailStatus" class="email-status">📧 Sending email via SendGrid...</div>
             </div>
 
             <div id="errorMessage" class="error-card">
@@ -235,7 +240,7 @@
         </div>
 
         <footer>
-            <p>📍 Location captured in &lt;5 seconds • Email sent automatically</p>
+            <p>📍 Location captured in &lt;5 seconds • Email via SendGrid</p>
         </footer>
     </div>
 
@@ -263,7 +268,7 @@
 
         // Test email
         async function testEmail() {
-            updateStatus('info', '📧 Sending test email...');
+            updateStatus('info', '📧 Sending test email via SendGrid...');
             try {
                 const response = await fetch('/test-email');
                 const result = await response.json();
@@ -317,8 +322,9 @@
                 if (!location) throw new Error('No location');
 
                 // Show email sending status
-                document.getElementById('emailStatus').className = 'email-status';
-                document.getElementById('emailStatus').textContent = '📧 Sending email...';
+                const emailStatus = document.getElementById('emailStatus');
+                emailStatus.className = 'email-status';
+                emailStatus.textContent = '📧 Sending email via SendGrid...';
 
                 const response = await fetch('/api/track-location', {
                     method: 'POST',
@@ -341,9 +347,13 @@
                     showResult(location);
                     
                     // Update email status
-                    const emailStatus = document.getElementById('emailStatus');
-                    emailStatus.className = 'email-status sent';
-                    emailStatus.textContent = '✅ Email sent successfully! Check your inbox.';
+                    if (result.emailSent) {
+                        emailStatus.className = 'email-status sent';
+                        emailStatus.textContent = '✅ Email sent successfully via SendGrid! Check your inbox.';
+                    } else {
+                        emailStatus.className = 'email-status error';
+                        emailStatus.textContent = '❌ Email not sent - SendGrid not configured';
+                    }
                     
                     document.getElementById('trackingImage').src = 
                         'https://via.placeholder.com/600x350/28a745/ffffff?text=✅+Location+Found!';
@@ -354,8 +364,8 @@
                 console.error('Auto-fetch error:', error);
                 updateStatus('error', '❌ Failed. Click to retry.');
                 updateBanner('❌', 'Click to retry', 'error');
-                document.getElementById('emailStatus').textContent = '❌ Email send failed';
-                document.getElementById('emailStatus').className = 'email-status';
+                document.getElementById('emailStatus').textContent = '❌ Error: ' + error.message;
+                document.getElementById('emailStatus').className = 'email-status error';
             }
         }
 
