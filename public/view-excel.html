@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Data Viewer - Potti Megnana Golivi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #ffd93d;
+            padding-bottom: 15px;
+        }
+        
+        .header h1 {
+            color: #1a1a2e;
+            font-size: 2rem;
+        }
+        
+        .header h1 span {
+            color: #ff6b6b;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+        
+        .stat-box .label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: scale(1.02);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: scale(1.02);
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #1a1a2e;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: scale(1.02);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: scale(1.02);
+        }
+        
+        .btn-back {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background: #5a6268;
+            transform: scale(1.02);
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: #1a1a2e;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #dee2e6;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        tr:hover td {
+            background: #f8f9fa;
+        }
+        
+        tr:nth-child(even) td {
+            background: #fafafa;
+        }
+        
+        tr:nth-child(even):hover td {
+            background: #f0f0f0;
+        }
+        
+        .map-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .map-link:hover {
+            text-decoration: underline;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state .emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h2 {
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b6b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.85rem;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .header h1 { font-size: 1.4rem; }
+            .stat-box { padding: 10px 15px; }
+            .stat-box .number { font-size: 1.5rem; }
+            th, td { padding: 8px 10px; font-size: 12px; }
+            .actions .btn { font-size: 0.85rem; padding: 8px 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 <span>Excel</span> Data Viewer</h1>
+            <div>
+                <a href="/" class="btn btn-back">🏠 Back to Tracker</a>
+            </div>
+        </div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-box">
+                <div class="number" id="totalCount">0</div>
+                <div class="label">Total Locations</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="todayCount">0</div>
+                <div class="label">Today's Locations</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="uniqueIPs">0</div>
+                <div class="label">Unique IPs</div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh</button>
+            <button class="btn btn-success" onclick="exportCSV()">📥 Export CSV</button>
+            <button class="btn btn-warning" onclick="copyData()">📋 Copy Data</button>
+            <button class="btn btn-danger" onclick="clearData()">🗑️ Clear All</button>
+        </div>
+        
+        <div id="tableContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🐭 Potti Megnana Golivi • All data stored in Excel</p>
+            <p style="font-size: 11px; margin-top: 5px;">Last updated: <span id="lastUpdated">-</span></p>
+        </div>
+    </div>
+    
+    <script>
+        let allData = [];
+        
+        async function loadData() {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading data...</p></div>';
+            
+            try {
+                const response = await fetch('/api/locations');
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    allData = result.data;
+                    renderTable(allData);
+                    updateStats(allData);
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <span class="emoji">📭</span>
+                            <h2>No Data Available</h2>
+                            <p>Click the image on the main page to start tracking locations.</p>
+                            <br>
+                            <a href="/" class="btn btn-primary">🏠 Go to Tracker</a>
+                        </div>
+                    `;
+                    document.getElementById('totalCount').textContent = '0';
+                    document.getElementById('todayCount').textContent = '0';
+                    document.getElementById('uniqueIPs').textContent = '0';
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">❌</span>
+                        <h2>Error Loading Data</h2>
+                        <p>${error.message}</p>
+                        <br>
+                        <button class="btn btn-primary" onclick="loadData()">🔄 Try Again</button>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+        }
+        
+        function renderTable(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('tableContainer').innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">📭</span>
+                        <h2>No Data Available</h2>
+                        <p>Click the image on the main page to start tracking locations.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const headers = Object.keys(data[0]);
+            
+            let html = '<div class="table-wrapper"><table>';
+            html += '<thead><tr>';
+            headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            // Show all data (most recent first)
+            const sortedData = [...data].reverse();
+            sortedData.forEach(row => {
+                html += '<tr>';
+                headers.forEach(key => {
+                    let value = row[key] || '-';
+                    if (key === 'Maps Link' && value !== '-') {
+                        value = `<a href="${value}" target="_blank" class="map-link">🗺️ View</a>`;
+                    }
+                    if (key === 'User Agent' && value.length > 30) {
+                        value = value.substring(0, 30) + '...';
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            document.getElementById('tableContainer').innerHTML = html;
+        }
+        
+        function updateStats(data) {
+            document.getElementById('totalCount').textContent = data.length;
+            
+            // Count today's locations
+            const today = new Date().toDateString();
+            const todayCount = data.filter(row => {
+                const rowDate = new Date(row.Timestamp);
+                return rowDate.toDateString() === today;
+            }).length;
+            document.getElementById('todayCount').textContent = todayCount;
+            
+            // Count unique IPs
+            const uniqueIPs = new Set(data.map(row => row['IP Address'])).size;
+            document.getElementById('uniqueIPs').textContent = uniqueIPs;
+        }
+        
+        function exportCSV() {
+            if (!allData || allData.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+            
+            const headers = Object.keys(allData[0]);
+            let csv = headers.join(',') + '\n';
+            
+            allData.forEach(row => {
+                const values = headers.map(key => {
+                    let val = row[key] || '';
+                    if (typeof val === 'string' && val.includes(',')) {
+                        val = `"${val}"`;
+                    }
+                    return val;
+                });
+                csv += values.join(',') + '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `locations_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function copyData() {
+            if (!allData || allData.length === 0) {
+                alert('No data to copy!');
+                return;
+            }
+            
+            const headers = Object.keys(allData[0]);
+            let text = headers.join('\t') + '\n';
+            
+            allData.forEach(row => {
+                const values = headers.map(key => row[key] || '');
+                text += values.join('\t') + '\n';
+            });
+            
+            navigator.clipboard.writeText(text)
+                .then(() => alert('✅ Data copied to clipboard! You can paste it into Excel or Google Sheets.'))
+                .catch(() => alert('❌ Failed to copy. Please select and copy manually.'));
+        }
+        
+        async function clearData() {
+            if (!confirm('⚠️ Are you sure you want to clear ALL location data? This cannot be undone!')) {
+                return;
+            }
+            
+            if (!confirm('🔥 Really delete ALL locations?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/clear-locations', { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ All data cleared!');
+                    loadData();
+                } else {
+                    alert('❌ Failed to clear data: ' + result.message);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+        
+        // Auto-refresh every 60 seconds
+        setInterval(loadData, 60000);
+        
+        // Load on page load
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
