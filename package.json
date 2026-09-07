@@ -1,7 +1,7 @@
 {
   "name": "location-tracker-excel",
   "version": "1.0.0",
-  "description": "Potti Megnana Golivi Location Tracker",
+  "description": "Potti Megnana Golivi - Exact GPS Location Tracker",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
