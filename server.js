@@ -83,37 +83,55 @@ function saveLocationToExcel(locationData) {
     }
 }
 
-initExcelFile();
-
-// ===== ROUTES =====
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/download-excel', (req, res) => {
-    if (fs.existsSync(EXCEL_FILE)) {
-        res.download(EXCEL_FILE, `locations_${new Date().toISOString().split('T')[0]}.xlsx`);
-    } else {
-        res.status(404).json({ success: false, message: 'No data available' });
-    }
-});
-
-app.get('/api/locations', (req, res) => {
+function getAllLocations() {
     try {
         if (fs.existsSync(EXCEL_FILE)) {
             const wb = XLSX.readFile(EXCEL_FILE);
             const ws = wb.Sheets['Locations'];
-            const data = XLSX.utils.sheet_to_json(ws);
-            res.json({ success: true, data: data });
-        } else {
-            res.json({ success: true, data: [] });
+            return XLSX.utils.sheet_to_json(ws);
         }
+        return [];
+    } catch (error) {
+        console.error('❌ Read error:', error);
+        return [];
+    }
+}
+
+initExcelFile();
+
+// ===== ROUTES =====
+
+// Main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// View Excel data in table format (SEPARATE URL)
+app.get('/view-excel', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'view-excel.html'));
+});
+
+// API: Get all locations as JSON
+app.get('/api/locations', (req, res) => {
+    try {
+        const data = getAllLocations();
+        res.json({ success: true, data: data });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
+// API: Get location count
+app.get('/api/count', (req, res) => {
+    try {
+        const data = getAllLocations();
+        res.json({ success: true, count: data.length });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// API: Get IP location
 app.get('/api/ip-location', async (req, res) => {
     try {
         let clientIP = req.headers['x-forwarded-for']?.split(',')[0] || 
@@ -193,6 +211,7 @@ app.get('/api/ip-location', async (req, res) => {
     }
 });
 
+// API: Track location and save to Excel
 app.post('/api/track-location', async (req, res) => {
     console.log('📍 Location tracked');
     
@@ -235,5 +254,6 @@ app.post('/api/track-location', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📊 Excel file: ${EXCEL_FILE}`);
-    console.log(`📍 App: http://localhost:${PORT}\n`);
+    console.log(`📍 Main page: http://localhost:${PORT}`);
+    console.log(`📋 View Excel: http://localhost:${PORT}/view-excel\n`);
 });
