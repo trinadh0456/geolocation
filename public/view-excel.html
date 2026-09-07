@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Data Viewer - Potti Megnana Golivi</title>
+    <title>Excel Data Viewer</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }
@@ -131,7 +131,6 @@
                     if (key === 'User Agent' && value.length > 30) {
                         value = value.substring(0, 30) + '...';
                     }
-                    // Highlight accuracy
                     if (key === 'Accuracy (m)' && value !== '-') {
                         const acc = parseInt(value);
                         if (acc < 10) value = `✅ ${value}`;
